@@ -8,18 +8,18 @@ from .const import INDEX, HOME
 import os
 
 
-def build(source_path: StrPath):
+def build(source_path: StrPath) -> None:
     freeze.build_ipk(InfiniPackage(source_path))
 
 
-def extract(source_path: StrPath, dist_path: StrPath | None = None):
+def extract(source_path: StrPath, dist_path: StrPath | None = None) -> None:
     dist_path = (
         Path(dist_path).resolve() if dist_path else Path(source_path).resolve().parent
     )
     freeze.extract_ipk(source_path, dist_path)
 
 
-def install(uri: str, index: str = ""):
+def install(uri: str, index: str = "") -> None:
     HOME.mkdir(parents=True, exist_ok=True)
     index = index if index else INDEX
 

@@ -9,9 +9,7 @@ import tempfile
 import shutil
 
 
-def build_ipk(
-    ipk: InfiniPackage,
-) -> InfiniFrozenPackage:
+def build_ipk(ipk: InfiniPackage) -> InfiniFrozenPackage:
     build_dir = ipk.source_path / ".build"
     src_path = ipk.source_path / "src"
     dist_path = ipk.source_path / "dist"

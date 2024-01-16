@@ -6,7 +6,7 @@ import requests
 import tempfile
 
 
-def load(name: str, baseurl: str = "", filename: str = ""):
+def load(name: str, baseurl: str = "", filename: str = "") -> None:
     ipk_bytes = requests.get(baseurl.rstrip("/") + "/" + filename).content
     hash_bytes = requests.get(baseurl.rstrip("/") + "/" + filename + ".hash").content
 

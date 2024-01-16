@@ -1,1 +1,8 @@
+from .api import install, extract, build
+
 __author__ = "苏向夜 <fu050409@163.com>"
+__organization__ = (
+    "Noctisynth",
+    "HydroRoll-Team",
+)
+__all__ = ["install", "extract", "build"]

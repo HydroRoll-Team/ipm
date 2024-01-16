@@ -10,6 +10,6 @@ def hash_ifp(lfp_path: str | Path, block_size=65536) -> bytes:
     return sha256.digest()
 
 
-def verify_ifp(lfp_path, expected_hash):
+def verify_ifp(lfp_path, expected_hash) -> bool:
     actual_hash = hash_ifp(lfp_path)
     return actual_hash == expected_hash
