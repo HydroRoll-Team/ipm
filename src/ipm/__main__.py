@@ -3,30 +3,26 @@ import argparse
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Infini Package Manager")
-    subparsers = parser.add_subparsers(title="subcommands", dest="command")
+    parser = argparse.ArgumentParser(description="Infini 包管理器")
+    subparsers = parser.add_subparsers(title="", dest="command")
 
     # Install command
-    install_parser = subparsers.add_parser("install", help="Install a package")
-    install_parser.add_argument("uri", help="Path or name of the package")
-    install_parser.add_argument("--index", help="Specify a custom package index")
+    install_parser = subparsers.add_parser("install", help="安装一个 Infini 规则包到此计算机")
+    install_parser.add_argument("uri", help="Infini 包的统一资源标识符")
+    install_parser.add_argument("--index", help="IPM 包服务器")
 
     # Extract command
-    extract_parser = subparsers.add_parser("extract", help="Extract a package")
-    extract_parser.add_argument(
-        "package", help="Path or name of the package to extract"
-    )
+    extract_parser = subparsers.add_parser("extract", help="解压缩 Infini 包")
+    extract_parser.add_argument("package", help="Infini 包路径")
     extract_parser.add_argument(
         "--dist",
         default=".",
-        help="Specify extraction directory (default: current directory)",
+        help="特定的解压路径 (默认: 当前工作目录)",
     )
 
     # Build command
     build_parser = subparsers.add_parser("build", help="打包 Infini 规则包")
-    build_parser.add_argument(
-        "package", nargs="?", help="Path or name of the package to build", default="."
-    )
+    build_parser.add_argument("package", nargs="?", help="Infini 包路径", default=".")
 
     args = parser.parse_args()
 
