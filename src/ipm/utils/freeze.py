@@ -2,7 +2,7 @@ from pathlib import Path
 from . import _freeze
 from ..exceptions import FileNotFoundError, VerifyFailed
 from ..models.ipk import InfiniPackage, InfiniFrozenPackage
-from .hash import hash_ifp, verify_ifp
+from .hash import ifp_hash, ifp_verify
 from ..typing import StrPath
 
 import tempfile
@@ -31,7 +31,7 @@ def build_ipk(ipk: InfiniPackage) -> InfiniFrozenPackage:
         str(ifp_path),
     )
 
-    (dist_path / ipk.hash_name).write_bytes(hash_ifp(ifp_path))
+    (dist_path / ipk.hash_name).write_bytes(ifp_hash(ifp_path))
 
     return InfiniFrozenPackage(source_path=ifp_path, **{"name": ipk.name})
 
@@ -44,7 +44,7 @@ def extract_ipk(source_path: StrPath, dist_path: str | Path) -> InfiniPackage:
     if not hash_path.exists():
         raise VerifyFailed("哈希文件不存在!")
 
-    if not verify_ifp(ifp_path, hash_path.read_bytes()):
+    if not ifp_verify(ifp_path, hash_path.read_bytes()):
         raise VerifyFailed("文件完整性验证失败!")
 
     temp_dir = tempfile.TemporaryDirectory()
