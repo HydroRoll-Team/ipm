@@ -3,8 +3,12 @@ import argparse
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Infini 包管理器")
-    subparsers = parser.add_subparsers(title="", dest="command")
+    parser = argparse.ArgumentParser(
+        prog="ipm", description="Infini 包管理器", exit_on_error=False
+    )
+    subparsers = parser.add_subparsers(
+        title="指令", dest="command", metavar="<operation>"
+    )
 
     # Install command
     install_parser = subparsers.add_parser("install", help="安装一个 Infini 规则包到此计算机")
@@ -22,7 +26,7 @@ def main():
 
     # Build command
     build_parser = subparsers.add_parser("build", help="打包 Infini 规则包")
-    build_parser.add_argument("package", nargs="?", help="Infini 包路径", default=".")
+    build_parser.add_argument("package", nargs="?", help="Infini 库路径", default=".")
 
     args = parser.parse_args()
 
