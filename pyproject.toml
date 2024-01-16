@@ -1,0 +1,24 @@
+[project]
+name = "ipm"
+version = "0.1.0-alpha.2"
+description = "Infini Package Manager"
+authors = [
+    {name = "苏向夜", email = "fu050409@163.com"},
+]
+dependencies = [
+    "multilogging>=1.0.2",
+    "pytest>=7.4.4",
+    "toml>=0.10.2",
+    "requests>=2.31.0",
+]
+requires-python = ">=3.10"
+readme = "README.md"
+license = {text = "MIT"}
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[tool.pdm]
+package-type = "library"
