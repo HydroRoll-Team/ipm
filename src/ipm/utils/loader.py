@@ -1,5 +1,5 @@
 from pathlib import Path
-from ..api import extract
+from .freeze import extract_ipk
 from ..const import HOME
 
 import requests
@@ -21,5 +21,5 @@ def load(name: str, baseurl: str = "", filename: str = "") -> None:
     hash_file.write(hash_bytes)
     hash_file.close()
 
-    extract(ipk_file, HOME)
+    extract_ipk(ipk_file, HOME)
     temp_dir.cleanup()
