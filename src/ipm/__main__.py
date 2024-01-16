@@ -31,7 +31,7 @@ def main():
     args = parser.parse_args()
 
     if args.command == "install":
-        install(args.uri, args.index)
+        install(args.uri, args.index, echo=True)
     elif args.command == "extract":
         extract(args.package, args.dist)
     elif args.command == "build":

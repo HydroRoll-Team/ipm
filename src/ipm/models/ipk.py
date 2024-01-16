@@ -58,6 +58,9 @@ class InfiniPackage:
     def hash_name(self) -> str:
         return f"{self.name}-{self.version}.ipk.hash"
 
+    # @property
+    # def home_p
+
 
 class InfiniFrozenPackage:
     source_path: Path
