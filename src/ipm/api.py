@@ -30,11 +30,10 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
 
     if os.path.isabs(uri):
         info(f"检定给定的 URI 地址[{uri}]为本地路径.", echo)
-        if uri.endswith(".ipk"):
-            info("安装中...", echo)
-            ipk = extract(Path(uri).resolve(), HOME, echo)
-        else:
+        if not uri.endswith(".ipk"):
             raise FileTypeMismatch("文件类型与预期[.ipk]不匹配.")
+        info("安装中...", echo)
+        ipk = extract(Path(uri).resolve(), HOME, echo)
     elif urlparser.is_valid_url(uri):
         filename = uri.rstrip("/").split("/")[-1]
         ipk = loader.load(
