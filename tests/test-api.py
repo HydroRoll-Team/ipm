@@ -30,7 +30,7 @@ def mock_api_functions(monkeypatch):
 @pytest.mark.parametrize("test_id, args, expected_call", [
     # Happy path tests
     (HAPPY_PATH_INSTALL, ["install", "http://ipm.hydroroll.team/package.ipk"], ("install", ["http://ipm.hydroroll.team/package.ipk", None])),
-    (HAPPY_PATH_EXTRACT, ["extract", "package.ipm", "--dist", "dist_folder"], ("extract", ["package.ipm", "dist_folder"])),
+    (HAPPY_PATH_EXTRACT, ["extract", "package.ipk", "--dist", "dist_folder"], ("extract", ["package.ipk", "dist_folder"])),
     (HAPPY_PATH_BUILD, ["build", "source_folder"], ("build", ["source_folder"])),
     
     # Edge case tests
