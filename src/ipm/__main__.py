@@ -1,6 +1,10 @@
 from .api import install, extract, build
+from .exceptions import IpmException
+from .logging import logger
+
 import argparse
 import sys
+
 
 def main():
     parser = argparse.ArgumentParser(
@@ -31,11 +35,20 @@ def main():
     args = parser.parse_args(sys.argv[1:] or ["-h"])
 
     if args.command == "install":
-        install(args.uri, args.index, echo=True)
+        try:
+            install(args.uri, args.index, echo=True)
+        except IpmException as error:
+            return logger.error(error)
     elif args.command == "extract":
-        extract(args.package, args.dist)
+        try:
+            extract(args.package, args.dist, echo=True)
+        except IpmException as error:
+            return logger.error(error)
     elif args.command == "build":
-        build(args.package)
+        try:
+            build(args.package, echo=True)
+        except IpmException as error:
+            return logger.error(error)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 from pathlib import Path
 from ..typing import List, Dict, Literal
-from ..exceptions import SyntaxError
+from ..exceptions import SyntaxError, TomlLoadFailed
 
 import toml
 
@@ -39,7 +39,11 @@ class InfiniPackage:
         self.source_path = Path(path).resolve()
         toml_path = self.source_path / "infini.toml"
 
-        data_load = toml.load(toml_path.open("r", encoding="utf-8"))
+        try:
+            data_load = toml.load(toml_path.open("r", encoding="utf-8"))
+        except Exception as error:
+            raise TomlLoadFailed(f"项目文件[infini.toml]导入失败: {error}") from error
+
         if "infini" not in data_load.keys():
             raise SyntaxError("配置文件中缺少[infini]项.")
 
@@ -57,9 +61,6 @@ class InfiniPackage:
     @property
     def hash_name(self) -> str:
         return f"{self.name}-{self.version}.ipk.hash"
-
-    # @property
-    # def home_p
 
 
 class InfiniFrozenPackage:
