@@ -26,5 +26,5 @@ jobs:
         
       - name: test api
         run: |
-          cd test
+          cd tests
           python -m test-api.py
