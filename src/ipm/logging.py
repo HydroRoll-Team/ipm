@@ -10,3 +10,7 @@ def info(message: str, echo: bool = True) -> None:
 
 def success(message: str, echo: bool = True) -> None:
     return logger.success(message) if echo else None
+
+
+def error(message: str, echo: bool = True) -> None:
+    return logger.error(message) if echo else None
