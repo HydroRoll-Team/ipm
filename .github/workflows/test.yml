@@ -25,9 +25,10 @@ jobs:
       - name: install test deps
         run: |
           pdm install -dG test
-          pip install pytest
+          # pip install pytest
         
       - name: test api
         run: |
           cd tests
-          python -m test-api.py
+          pdm venv activate in-project
+          pdm run test-api.py
