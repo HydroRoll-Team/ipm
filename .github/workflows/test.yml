@@ -17,7 +17,14 @@ jobs:
         with:
           python-version: "3.9"
 
-      - run: |
-          pwd
-          cd tests
-          python3 -m test-api.py
+      - name: set up pdm
+        run: pip install pdm
+      
+      - name: install test deps
+        run: |
+          pdm install -dG test
+        
+      - name: test api
+        run: |
+          cd test
+          python -m test-api.py
