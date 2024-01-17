@@ -17,12 +17,13 @@ jobs:
         with:
           python-version: "3.9"
 
-      - name: set up pdm
+      - name: setup pdm
         run: pip install pdm
       
       - name: install test deps
         run: |
           pdm install -dG test
+          pip install pytest
         
       - name: test api
         run: |
