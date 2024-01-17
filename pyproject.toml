@@ -3,7 +3,8 @@ name = "ipm"
 version = "0.1.0-alpha.2"
 description = "Infini Package Manager"
 authors = [
-    {name = "苏向夜", email = "fu050409@163.com"},
+    { name = "苏向夜", email = "fu050409@163.com" },
+    { name = "简律纯", email = "leader@hydroroll.team" },
 ]
 dependencies = [
     "multilogging>=1.0.2",
@@ -13,12 +14,14 @@ dependencies = [
 ]
 requires-python = ">=3.10"
 readme = "README.md"
-license = {text = "MIT"}
+license = { text = "MIT" }
 
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
+[project.scripts]
+ipm = "ipm.__main__:main"
 
 [tool.pdm]
 package-type = "library"
