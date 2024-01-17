@@ -2,11 +2,19 @@ class IpmException(Exception):
     """IPM Base Exception"""
 
 
-class FileNotFoundError(IpmException, FileNotFoundError):
+class FileException(IpmException):
+    """IPM File Base Exception"""
+
+
+class TomlLoadFailed(FileException):
+    """Failed to load `infini.toml`"""
+
+
+class FileNotFoundError(FileException, FileNotFoundError):
     """Raises when file not founded"""
 
 
-class FileExistsError(IpmException, FileExistsError):
+class FileExistsError(FileException, FileExistsError):
     """Raises when file not founded"""
 
 
