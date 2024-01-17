@@ -1,6 +1,6 @@
 from .api import install, extract, build
 import argparse
-
+import sys
 
 def main():
     parser = argparse.ArgumentParser(
@@ -28,7 +28,7 @@ def main():
     build_parser = subparsers.add_parser("build", help="打包 Infini 规则包")
     build_parser.add_argument("package", nargs="?", help="Infini 库路径", default=".")
 
-    args = parser.parse_args()
+    args = parser.parse_args(sys.argv[1:] or ["-h"])
 
     if args.command == "install":
         install(args.uri, args.index, echo=True)
