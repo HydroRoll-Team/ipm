@@ -60,3 +60,5 @@ def test_main_commands(test_id, args, expected_call, mock_sys_argv, mock_api_fun
     elif expected_call[0] == "error":
         captured = capsys.readouterr()
         assert "error: unrecognized arguments" in captured.err
+
+pytest.main()
