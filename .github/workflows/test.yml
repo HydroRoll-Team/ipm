@@ -19,6 +19,8 @@ jobs:
 
       - name: setup pdm
         run: pip install pdm
+
+      - run: pdm install
       
       - name: install test deps
         run: |
