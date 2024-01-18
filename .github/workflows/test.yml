@@ -1,0 +1,30 @@
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Test IPM
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.9"
+
+      - name: Setup PDM
+        run: |
+          pip install pdm
+          pdm add pytest
+
+      - name: Install IPM
+        run: pdm install
+
+      - name: Test API
+        run: |
+          pdm run python -m pytest tests/

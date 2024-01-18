@@ -26,3 +26,8 @@ ipm = "ipm.__main__:main"
 
 [tool.pdm]
 package-type = "library"
+
+[tool.pdm.dev-dependencies]
+test = [
+    "pytest>=7.4.4",
+]

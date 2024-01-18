@@ -68,7 +68,7 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
     info("正在初始化 IPM 环境...", echo)
 
     HOME.mkdir(parents=True, exist_ok=True)
-    index = index if index else INDEX
+    index = index or INDEX
 
     if uri.isalpha():
         ...
