@@ -53,7 +53,7 @@ def extract_ipk(
     hash_path = ifp_path.parent / (ifp_path.name + ".hash")
 
     if not hash_path.exists():
-        raise VerifyFailed("哈希文件不存在!")
+        raise VerifyFailed(f"哈希文件[{hash_path}]不存在!")
 
     if not ifp_verify(ifp_path, hash_path.read_bytes()):
         raise VerifyFailed("文件完整性验证失败!")
