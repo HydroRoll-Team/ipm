@@ -1,17 +1,16 @@
 [project]
 name = "ipm"
 version = "0.1.0-alpha.3"
-description = "Infini Package Manager"
+description = "Infini 包管理器"
 authors = [
     { name = "苏向夜", email = "fu050409@163.com" },
     { name = "简律纯", email = "leader@hydroroll.team" },
 ]
 dependencies = [
+    "typer>=0.9.0",
     "multilogging>=1.0.2",
-    "pytest>=7.4.4",
     "toml>=0.10.2",
     "requests>=2.31.0",
-    "typer>=0.9.0",
 ]
 requires-python = ">=3.10"
 readme = "README.md"
