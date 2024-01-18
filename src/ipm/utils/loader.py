@@ -1,6 +1,6 @@
 from pathlib import Path
 from .freeze import extract_ipk
-from ..const import HOME
+from ..const import SRC_HOME
 from ..models.ipk import InfiniPackage
 
 import requests
@@ -22,6 +22,6 @@ def load(name: str, baseurl: str = "", filename: str = "") -> InfiniPackage:
     hash_file.write(hash_bytes)
     hash_file.close()
 
-    ipk = extract_ipk(ipk_file, HOME)
+    ipk = extract_ipk(ipk_file, SRC_HOME)
     temp_dir.cleanup()
     return ipk

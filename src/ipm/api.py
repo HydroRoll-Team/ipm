@@ -3,7 +3,7 @@ from .typing import StrPath
 from .utils import freeze, urlparser, loader
 from .models.ipk import InfiniPackage, InfiniFrozenPackage
 from .exceptions import FileTypeMismatch, TomlLoadFailed, FileNotFoundError
-from .const import INDEX, HOME
+from .const import INDEX, SRC_HOME
 from .logging import info, success, warning, error
 
 import toml
@@ -67,7 +67,7 @@ def extract(
 def install(uri: str, index: str = "", echo: bool = False) -> None:
     info("正在初始化 IPM 环境...", echo)
 
-    HOME.mkdir(parents=True, exist_ok=True)
+    SRC_HOME.mkdir(parents=True, exist_ok=True)
     index = index or INDEX
 
     if uri.isalpha():
@@ -87,7 +87,7 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
 
         if uri.endswith(".ipk"):
             info("安装中...", echo)
-            ipk = extract(Path(uri).resolve(), HOME, echo)
+            ipk = extract(Path(uri).resolve(), SRC_HOME, echo)
         else:
             raise FileTypeMismatch("文件类型与预期[.ipk]不匹配.")
 
