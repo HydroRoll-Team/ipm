@@ -35,6 +35,9 @@ class InfiniPackage:
     authors: Authors
     license: str
 
+    requirements: dict
+    dependencies: dict
+
     def __init__(self, path: str | Path = ".") -> None:
         self.source_path = Path(path).resolve()
         toml_path = self.source_path / "infini.toml"
@@ -54,6 +57,9 @@ class InfiniPackage:
         self.authors = Authors(infini.get("authors") or [])
         self.license = infini.get("license") or "MIT"
 
+        self.requirements = data_load["requirements"]
+        self.dependencies = data_load["dependencies"]
+
     @property
     def default_name(self) -> str:
         return f"{self.name}-{self.version}.ipk"
@@ -62,24 +68,28 @@ class InfiniPackage:
     def hash_name(self) -> str:
         return f"{self.name}-{self.version}.ipk.hash"
 
+    def export_dict(self) -> dict:
+        return {
+            "infini": {
+                "name": self.source_path.name,
+                "version": self.version,
+                "description": self.description,
+                "authors": [
+                    {"name": author.name, "email": author.email}
+                    for author in self.authors.authors
+                ],
+                "license": self.license,
+            },
+            "requirements": self.requirements,
+            "dependencies": self.dependencies,
+        }
+
 
 class InfiniFrozenPackage:
     source_path: Path
 
-    name: str
-    version: str
-    description: str
-    authors: Authors
-    license: str
-
     def __init__(self, source_path: str | Path, **kwargs) -> None:
         self.source_path = Path(source_path).resolve()
-
-        self.name = kwargs.get("name") or ""
-        self.version = kwargs.get("version") or ""
-        self.description = kwargs.get("description") or ""
-        self.authors = Authors(kwargs.get("authors") or [])
-        self.license = kwargs.get("license") or "MIT"
 
     @property
     def hash_name(self) -> str:
