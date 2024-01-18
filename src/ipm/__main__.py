@@ -1,54 +1,62 @@
-from .api import install, extract, build
+from . import api
 from .exceptions import IpmException
 from .logging import logger
+import typer
 
-import argparse
-import sys
+main = typer.Typer(
+    name="ipm", help="Infini 包管理器", no_args_is_help=True, add_completion=False
+)
 
 
-def main():
-    parser = argparse.ArgumentParser(
-        prog="ipm", description="Infini 包管理器", exit_on_error=False
-    )
-    subparsers = parser.add_subparsers(
-        title="指令", dest="command", metavar="<operation>"
-    )
+@main.command()
+def install(
+    uri: str = typer.Argument(help="Infini 包的统一资源标识符"),
+    index: str = typer.Option(None, help="IPM 包服务器"),
+):
+    """安装一个 Infini 规则包到此计算机"""
+    try:
+        api.install(uri, index, echo=True)
+    except IpmException as error:
+        logger.error(error)
 
-    # Install command
-    install_parser = subparsers.add_parser("install", help="安装一个 Infini 规则包到此计算机")
-    install_parser.add_argument("uri", help="Infini 包的统一资源标识符")
-    install_parser.add_argument("--index", help="IPM 包服务器")
 
-    # Extract command
-    extract_parser = subparsers.add_parser("extract", help="解压缩 Infini 包")
-    extract_parser.add_argument("package", help="Infini 包路径")
-    extract_parser.add_argument(
-        "--dist",
-        default=".",
-        help="特定的解压路径 (默认: 当前工作目录)",
-    )
+@main.command()
+def extract(
+    package: str = typer.Argument(help="Infini 项目路径"),
+    dist: str = typer.Option(".", help="特定的解压路径"),
+):
+    """解压缩 Infini 包"""
+    try:
+        api.extract(package, dist, echo=True)
+    except IpmException as error:
+        logger.error(error)
 
-    # Build command
-    build_parser = subparsers.add_parser("build", help="打包 Infini 规则包")
-    build_parser.add_argument("package", nargs="?", help="Infini 库路径", default=".")
 
-    args = parser.parse_args(sys.argv[1:] or ["-h"])
+@main.command()
+def init(force: bool = typer.Option(None, "--force", "-f", help="强制初始化")):
+    """初始化一个 Infini 项目"""
+    try:
+        api.init(".", force, echo=True)
+    except IpmException as error:
+        logger.error(error)
 
-    if args.command == "install":
-        try:
-            install(args.uri, args.index, echo=True)
-        except IpmException as error:
-            return logger.error(error)
-    elif args.command == "extract":
-        try:
-            extract(args.package, args.dist, echo=True)
-        except IpmException as error:
-            return logger.error(error)
-    elif args.command == "build":
-        try:
-            build(args.package, echo=True)
-        except IpmException as error:
-            return logger.error(error)
+
+@main.command()
+def new(package: str = typer.Argument(help="Infini 项目路径")):
+    """新建一个 Infini 项目"""
+    try:
+        api.new(package, echo=True)
+    except IpmException as error:
+        logger.error(error)
+
+
+@main.command()
+def build(package: str = typer.Argument(".", help="Infini 项目路径")):
+    """打包 Infini 规则包"""
+    try:
+        api.build(package, echo=True)
+    except IpmException as error:
+        logger.error(error)
 
 
 if __name__ == "__main__":

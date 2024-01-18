@@ -11,7 +11,7 @@ import shutil
 
 
 def build_ipk(ipk: InfiniPackage, echo: bool = False) -> InfiniFrozenPackage:
-    info("正在初始化开发环境...")
+    info("正在初始化开发环境...", echo)
     build_dir = ipk.source_path / "build"
     src_path = ipk.source_path / "src"
     dist_path = ipk.source_path / "dist"
@@ -25,22 +25,22 @@ def build_ipk(ipk: InfiniPackage, echo: bool = False) -> InfiniFrozenPackage:
     dist_path.mkdir(parents=True, exist_ok=True)
     build_dir.mkdir(parents=True, exist_ok=True)
 
-    info("开发环境构建完成, 开始复制工程文件...")
+    info("开发环境构建完成, 开始复制工程文件...", echo)
     shutil.copytree(src_path, build_dir / "src")
     shutil.copy2(ipk.source_path / "infini.toml", build_dir / "infini.toml")
-    info("工程文件复制完毕, 开始打包[ipk]文件...")
+    info("工程文件复制完毕, 开始打包[ipk]文件...", echo)
 
     _freeze.create_tar_gz(
         str(build_dir),
         str(ifp_path),
     )
 
-    success(f"打包文件已存至[{ifp_path}].")
-    info("开始创建SHA256验证文件...")
+    success(f"打包文件已存至[{ifp_path}].", echo)
+    info("开始创建SHA256验证文件...", echo)
     hash_bytes = ifp_hash(ifp_path)
-    info(f"文件SHA256值为[{hash_bytes.hex()}].")
+    info(f"文件SHA256值为[{hash_bytes.hex()}].", echo)
     (dist_path / ipk.hash_name).write_bytes(hash_bytes)
-    success(f"包[{ipk.name}]构建成功.")
+    success(f"包[{ipk.name}]构建成功.", echo)
 
     return InfiniFrozenPackage(source_path=ifp_path, **{"name": ipk.name})
 
