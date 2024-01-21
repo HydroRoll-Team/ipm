@@ -2,8 +2,9 @@ from pathlib import Path
 from .typing import StrPath
 from .utils import freeze, urlparser, loader
 from .models.ipk import InfiniPackage, InfiniFrozenPackage
+from .models.lock import PackageLock
 from .exceptions import FileTypeMismatch, TomlLoadFailed, FileNotFoundError
-from .const import INDEX, SRC_HOME
+from .const import INDEX, STORAGE, SRC_HOME
 from .logging import info, success, warning, error
 
 import toml
@@ -69,12 +70,14 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
 
     SRC_HOME.mkdir(parents=True, exist_ok=True)
     index = index or INDEX
+    lock = PackageLock()
 
     if uri.isalpha():
+        # TODO
         ...
     elif urlparser.is_valid_url(uri):
         filename = uri.rstrip("/").split("/")[-1]
-        ipk = loader.load(
+        temp_ipk = loader.load_from_remote(
             "temp",
             uri.rstrip("/").rsplit("/")[0],
             filename,
@@ -86,10 +89,18 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
             raise FileNotFoundError("给定的 URI 路径不存在!")
 
         if uri.endswith(".ipk"):
-            info("安装中...", echo)
-            ipk = extract(Path(uri).resolve(), SRC_HOME, echo)
+            temp_ipk = loader.load_from_local(path)
         else:
             raise FileTypeMismatch("文件类型与预期[.ipk]不匹配.")
+
+    if lock.has_ipk(temp_ipk.name):
+        raise  # TODO
+
+    info(f"开始安装[{temp_ipk.name}]中...", echo)
+    ipk = extract(STORAGE / temp_ipk.source_path, SRC_HOME, echo)
+    info("正在处理全局包锁...")
+    lock.add(ipk, dump=True)
+    info("全局锁已处理完毕.")
 
     success(f"包[{ipk.name}]成功安装在[{ipk.source_path}].", echo)
 

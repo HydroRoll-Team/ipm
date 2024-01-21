@@ -1,4 +1,5 @@
 from pathlib import Path
+from . import lock
 from ..typing import List, Dict, Literal
 from ..exceptions import SyntaxError, TomlLoadFailed
 
@@ -38,6 +39,8 @@ class InfiniPackage:
     requirements: dict
     dependencies: dict
 
+    lock: lock.ProjectLock
+
     def __init__(self, path: str | Path = ".") -> None:
         self.source_path = Path(path).resolve()
         toml_path = self.source_path / "infini.toml"
@@ -59,6 +62,7 @@ class InfiniPackage:
 
         self.requirements = data_load["requirements"]
         self.dependencies = data_load["dependencies"]
+        # self.lock = ProjectLock
 
     @property
     def default_name(self) -> str:
