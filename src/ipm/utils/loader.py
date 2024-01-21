@@ -1,14 +1,16 @@
 from pathlib import Path
 from .freeze import extract_ipk
-from ..const import SRC_HOME, STORAGE
-from ..models.ipk import InfiniPackage
+from ..const import STORAGE
+from ..models.ipk import InfiniFrozenPackage
 
 import requests
 import tempfile
 import shutil
 
 
-def load_from_remote(name: str, baseurl: str = "", filename: str = "") -> InfiniPackage:
+def load_from_remote(
+    name: str, baseurl: str = "", filename: str = ""
+) -> InfiniFrozenPackage:
     ipk_bytes = requests.get(baseurl.rstrip("/") + "/" + filename).content
     hash_bytes = requests.get(baseurl.rstrip("/") + "/" + filename + ".hash").content
 
@@ -29,14 +31,18 @@ def load_from_remote(name: str, baseurl: str = "", filename: str = "") -> Infini
     move_to = STORAGE / temp_ipk.name
     move_to.mkdir(parents=True, exist_ok=True)
 
-    shutil.copy2(ipk_file, move_to)
-    shutil.copy2(hash_file, move_to)
+    shutil.copy2(ipk_file, move_to / temp_ipk.default_name)
+    shutil.copy2(hash_file, move_to / (temp_ipk.default_name + ".hash"))
+
+    ifp = InfiniFrozenPackage(
+        move_to / temp_ipk.default_name, name=temp_ipk.name, version=temp_ipk.version
+    )
 
     temp_dir.cleanup()
-    return temp_ipk
+    return ifp
 
 
-def load_from_local(source_path: Path) -> InfiniPackage:
+def load_from_local(source_path: Path) -> InfiniFrozenPackage:
     temp_dir = tempfile.TemporaryDirectory()
     temp_path = Path(temp_dir.name).resolve()
 
@@ -47,5 +53,9 @@ def load_from_local(source_path: Path) -> InfiniPackage:
     shutil.copy2(source_path, move_to)
     shutil.copy2(source_path.parent / (source_path.name + ".hash"), move_to)
 
+    ifp = InfiniFrozenPackage(
+        move_to / temp_ipk.default_name, name=temp_ipk.name, version=temp_ipk.version
+    )
+
     temp_dir.cleanup()
-    return temp_ipk
+    return ifp

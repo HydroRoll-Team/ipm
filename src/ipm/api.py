@@ -1,7 +1,7 @@
 from pathlib import Path
 from .typing import StrPath
 from .utils import freeze, urlparser, loader
-from .models.ipk import InfiniPackage, InfiniFrozenPackage
+from .models.ipk import InfiniProject, InfiniFrozenPackage
 from .models.lock import PackageLock
 from .exceptions import FileTypeMismatch, TomlLoadFailed, FileNotFoundError
 from .const import INDEX, STORAGE, SRC_HOME
@@ -49,7 +49,7 @@ def new(dist_path: StrPath, echo: bool = False) -> None:
 def build(source_path: StrPath, echo: bool = False) -> InfiniFrozenPackage:
     info("检查构建环境...", echo)
     try:
-        ipk = InfiniPackage(source_path)
+        ipk = InfiniProject(source_path)
         info(f"包[{ipk.name}]构建环境载入完毕.", echo)
     except TomlLoadFailed as e:
         return error(f"环境存在异常: {e}", echo)
@@ -58,7 +58,7 @@ def build(source_path: StrPath, echo: bool = False) -> InfiniFrozenPackage:
 
 def extract(
     source_path: StrPath, dist_path: StrPath | None = None, echo: bool = False
-) -> InfiniPackage:
+) -> InfiniProject:
     dist_path = (
         Path(dist_path).resolve() if dist_path else Path(source_path).resolve().parent
     )
@@ -77,7 +77,7 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
         ...
     elif urlparser.is_valid_url(uri):
         filename = uri.rstrip("/").split("/")[-1]
-        temp_ipk = loader.load_from_remote(
+        ifp = loader.load_from_remote(
             "temp",
             uri.rstrip("/").rsplit("/")[0],
             filename,
@@ -89,21 +89,21 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
             raise FileNotFoundError("给定的 URI 路径不存在!")
 
         if uri.endswith(".ipk"):
-            temp_ipk = loader.load_from_local(path)
+            ifp = loader.load_from_local(path)
         else:
             raise FileTypeMismatch("文件类型与预期[.ipk]不匹配.")
 
-    if lock.has_ipk(temp_ipk.name):
+    if lock.has_ipk(ifp.name):
         raise  # TODO
 
-    info(f"开始安装[{temp_ipk.name}]中...", echo)
-    ipk = extract(STORAGE / temp_ipk.name / temp_ipk.default_name, SRC_HOME, echo)
-    info("正在处理全局包锁...")
-    lock.add(ipk, dump=True)
-    info("全局锁已处理完毕.")
+    info(f"开始安装[{ifp.name}]中...", echo)
+    ipk = extract(STORAGE / ifp.name / ifp.default_name, SRC_HOME, echo)
+    info("正在处理全局包锁...", echo)
+    lock.add(ifp, dump=True)
+    info("全局锁已处理完毕.", echo)
 
     success(f"包[{ipk.name}]成功安装在[{ipk.source_path}].", echo)
 
 
-def uninstall(ipk: str | InfiniPackage):
+def uninstall(ipk: str | InfiniProject):
     ...

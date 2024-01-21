@@ -1,6 +1,6 @@
 from pathlib import Path
 from ..exceptions import FileNotFoundError, VerifyFailed
-from ..models.ipk import InfiniPackage, InfiniFrozenPackage
+from ..models.ipk import InfiniProject, InfiniFrozenPackage
 from ..typing import StrPath
 from ..logging import logger, info, success
 from .hash import ifp_hash, ifp_verify
@@ -10,7 +10,7 @@ import tempfile
 import shutil
 
 
-def build_ipk(ipk: InfiniPackage, echo: bool = False) -> InfiniFrozenPackage:
+def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
     info("正在初始化开发环境...", echo)
     build_dir = ipk.source_path / "build"
     src_path = ipk.source_path / "src"
@@ -47,7 +47,7 @@ def build_ipk(ipk: InfiniPackage, echo: bool = False) -> InfiniFrozenPackage:
 
 def extract_ipk(
     source_path: StrPath, dist_path: StrPath, echo: bool = False
-) -> InfiniPackage:
+) -> InfiniProject:
     ifp_path = Path(source_path).resolve()
     dist_path = Path(dist_path).resolve()
     hash_path = ifp_path.parent / (ifp_path.name + ".hash")
@@ -63,7 +63,7 @@ def extract_ipk(
     temp_path = Path(temp_dir.name).resolve() / "ifp"
     info(f"创建临时目录[{temp_dir}], 开始解压...", echo)
     _freeze.extract_tar_gz(str(ifp_path), str(temp_path))
-    temp_pkg = InfiniPackage(temp_path)
+    temp_pkg = InfiniProject(temp_path)
     dist_pkg_path = dist_path / temp_pkg.name
     success(f"包[{temp_pkg.name}]解压完成.", echo)
 
@@ -80,4 +80,4 @@ def extract_ipk(
     info(f"任务完成, 开始清理临时文件...", echo)
     temp_dir.cleanup()
     info(f"临时文件清理完毕.", echo)
-    return InfiniPackage(dist_pkg_path)
+    return InfiniProject(dist_pkg_path)

@@ -30,6 +30,19 @@ class Authors:
 class InfiniPackage:
     source_path: Path
 
+    name: str | None
+    version: str | None
+
+    @property
+    def default_name(self) -> str:
+        return f"{self.name}-{self.version}.ipk"
+
+    @property
+    def hash_name(self) -> str:
+        return f"{self.name}-{self.version}.ipk.hash"
+
+
+class InfiniProject(InfiniPackage):
     name: str
     version: str
     description: str
@@ -64,14 +77,6 @@ class InfiniPackage:
         self.dependencies = data_load["dependencies"]
         # self.lock = ProjectLock
 
-    @property
-    def default_name(self) -> str:
-        return f"{self.name}-{self.version}.ipk"
-
-    @property
-    def hash_name(self) -> str:
-        return f"{self.name}-{self.version}.ipk.hash"
-
     def export_dict(self) -> dict:
         return {
             "infini": {
@@ -89,11 +94,20 @@ class InfiniPackage:
         }
 
 
-class InfiniFrozenPackage:
-    source_path: Path
+class InfiniFrozenPackage(InfiniPackage):
+    name: str | None
+    version: str | None
+    hash: str
 
     def __init__(self, source_path: str | Path, **kwargs) -> None:
         self.source_path = Path(source_path).resolve()
+
+        self.hash = (
+            (self.source_path.parent / (source_path.name + ".hash")).read_bytes().hex()
+        )
+
+        self.name = kwargs.get("name")
+        self.version = kwargs.get("version")
 
     @property
     def hash_name(self) -> str:
