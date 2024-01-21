@@ -13,7 +13,7 @@ class IpmLock(metaclass=ABCMeta):
     packages: List[Dict[str, Any]]
     source_path: Path
 
-    def __init__(self, source_path: StrPath = IPM_PATH / "inifni.lock") -> None:
+    def __init__(self, source_path: StrPath = IPM_PATH / "infini.lock") -> None:
         IPM_PATH.mkdir(parents=True, exist_ok=True)
         self.source_path = source_path
         self.load()
@@ -23,7 +23,7 @@ class IpmLock(metaclass=ABCMeta):
             self.metadata = {}
             self.packages = []
             source_file = self.source_path.open("w", encoding="utf-8")
-            source_file.write(ATTENSION + str(self.dumps()))
+            source_file.write(ATTENSION + toml.dumps(self.dumps()))
             source_file.close()
         else:
             loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
@@ -31,7 +31,7 @@ class IpmLock(metaclass=ABCMeta):
                 loaded_data["metadata"] if "metadata" in loaded_data.keys() else {}
             )
             self.packages = (
-                loaded_data["package"] if "package" in loaded_data.keys() else []
+                loaded_data["packages"] if "packages" in loaded_data.keys() else []
             )
 
     def dumps(self) -> dict:
@@ -60,14 +60,22 @@ class PackageLock(IpmLock):
         )
         return self.dump() if dump else ""
 
-    def remove(self, name: str) -> None:
+    def remove(self, name: str, dump: bool = False) -> str:
         name = name.strip()
         for package in self.packages:
             if "name" not in package.keys():
                 raise SyntaxError("异常的锁文件!")
             if package["name"] == name:
                 self.packages.remove(package)
-                return
+                break
+        return self.dump() if dump else ""
+
+    def get_ipk(self, name: str) -> dict | None:
+        name = name.strip()
+        for package in self.packages:
+            if package["name"] == name:
+                return package
+        return None
 
     def has_ipk(self, name: str) -> bool:
         name = name.strip()
