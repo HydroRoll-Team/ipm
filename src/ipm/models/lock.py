@@ -50,12 +50,12 @@ class PackageLock(IpmLock):
     def __init__(self) -> None:
         super().__init__()
 
-    def add(self, ipk: "ipk.InfiniFrozenPackage", dump: bool = False) -> str:
+    def add(self, ifp: "ipk.InfiniFrozenPackage", dump: bool = False) -> str:
         self.packages.append(
             {
-                "name": ipk.name,
-                "version": ipk.version,
-                "hash": ipk.hash,
+                "name": ifp.name,
+                "version": ifp.version,
+                "hash": ifp.hash,
             }
         )
         return self.dump() if dump else ""
