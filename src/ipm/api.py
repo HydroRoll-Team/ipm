@@ -97,7 +97,7 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
         raise  # TODO
 
     info(f"开始安装[{temp_ipk.name}]中...", echo)
-    ipk = extract(STORAGE / temp_ipk.source_path, SRC_HOME, echo)
+    ipk = extract(STORAGE / temp_ipk.name / temp_ipk.default_name, SRC_HOME, echo)
     info("正在处理全局包锁...")
     lock.add(ipk, dump=True)
     info("全局锁已处理完毕.")

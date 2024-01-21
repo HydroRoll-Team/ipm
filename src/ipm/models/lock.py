@@ -20,17 +20,28 @@ class IpmLock(metaclass=ABCMeta):
 
     def load(self):
         if not self.source_path.exists():
-            self.source_path.write_text(ATTENSION)
+            self.metadata = {}
             self.packages = {}
+            source_file = self.source_path.open("w", encoding="utf-8")
+            source_file.write(ATTENSION + str(self.dumps()))
+            source_file.close()
         else:
             loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
-            self.packages = loaded_data["package"]
+            self.metadata = (
+                loaded_data["metadata"] if "metadata" in loaded_data.keys() else {}
+            )
+            self.packages = (
+                loaded_data["package"] if "package" in loaded_data.keys() else []
+            )
 
     def dumps(self) -> dict:
         return {"metadata": self.metadata, "packages": self.packages}
 
     def dump(self) -> str:
-        return toml.dump(self.source_path.open("w+", encoding="utf-8"))
+        data_to_dump = ATTENSION + toml.dumps(self.dumps())
+        source_file = self.source_path.open("w", encoding="utf-8")
+        source_file.write(data_to_dump)
+        source_file.close()
 
 
 class PackageLock(IpmLock):
