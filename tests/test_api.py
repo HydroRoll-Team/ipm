@@ -26,3 +26,7 @@ def test_install():
     api.build("test")
     api.install("./test/dist/test-0.1.0.ipk")
     shutil.rmtree("test", ignore_errors=True)
+
+
+def test_uninstall():
+    api.uninstall("test", confirm=True)
