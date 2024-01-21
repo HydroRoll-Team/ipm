@@ -21,7 +21,7 @@ class IpmLock(metaclass=ABCMeta):
     def load(self):
         if not self.source_path.exists():
             self.metadata = {}
-            self.packages = {}
+            self.packages = []
             source_file = self.source_path.open("w", encoding="utf-8")
             source_file.write(ATTENSION + str(self.dumps()))
             source_file.close()
