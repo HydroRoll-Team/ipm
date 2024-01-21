@@ -8,6 +8,7 @@ from .const import INDEX, STORAGE, SRC_HOME
 from .logging import info, success, warning, error
 
 import toml
+import shutil
 
 
 def init(source_path: StrPath, force: bool = False, echo: bool = False) -> None:
@@ -105,5 +106,25 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
     success(f"包[{ipk.name}]成功安装在[{ipk.source_path}].", echo)
 
 
-def uninstall(ipk: str | InfiniProject):
-    ...
+def uninstall(name: str, confirm: bool = False, echo: bool = False) -> None:
+    lock = PackageLock()
+    path = SRC_HOME / name.strip()
+
+    if not (install_info := lock.get_ipk(name)):
+        return warning(f"由于[{name}]未被安装, 故忽略卸载操作.", echo)
+
+    info(f"发现已经安装的[{name}]版本[{install_info['version']}]:", echo)
+    info(f"  将会清理: {path}", echo)
+    # TODO: 拆分安装lock和安装ipk的lock
+    confirm: bool = (
+        True
+        if (input("你确定要继续 (Y/n) ").upper() in ("", "Y") if not confirm else confirm)
+        else False
+    )
+    if confirm:
+        shutil.rmtree(SRC_HOME / name, ignore_errors=True)
+    else:
+        return info("忽略.", echo)
+
+    lock.remove(name, dump=True)
+    success(f"规则包[{name}]卸载完成!", echo)

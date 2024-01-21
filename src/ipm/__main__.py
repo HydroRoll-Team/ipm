@@ -59,5 +59,14 @@ def build(package: str = typer.Argument(".", help="Infini 项目路径")):
         logger.error(error)
 
 
+@main.command()
+def uninstall(package: str = typer.Argument(help="Infini 项目路径")):
+    """卸载 Infini 规则包"""
+    try:
+        api.uninstall(package, echo=True)
+    except IpmException as error:
+        logger.error(error)
+
+
 if __name__ == "__main__":
     main()
