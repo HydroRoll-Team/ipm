@@ -1,6 +1,6 @@
 [project]
 name = "ipm"
-version = "0.1.0-alpha.4"
+version = "0.1.0-alpha.5"
 description = "Infini 包管理器"
 authors = [
     { name = "苏向夜", email = "fu050409@163.com" },
