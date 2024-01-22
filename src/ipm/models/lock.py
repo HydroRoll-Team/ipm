@@ -4,8 +4,10 @@ from . import ipk
 from ..typing import Dict, List, StrPath, Any
 from ..const import IPM_PATH, ATTENSION
 from ..exceptions import SyntaxError
+from ..utils.uuid import generate_uuid
 
 import toml
+import socket
 
 
 class IpmLock(metaclass=ABCMeta):
@@ -21,15 +23,28 @@ class IpmLock(metaclass=ABCMeta):
 
     def load(self):
         if not self.source_path.exists():
-            self.metadata = {}
+            self.metadata = {
+                "host": socket.gethostname(),
+                "uuid": generate_uuid(),
+            }
             self.packages = []
             self.storages = []
             self.dumps()
         else:
             loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
             self.metadata = (
-                loaded_data["metadata"] if "metadata" in loaded_data.keys() else {}
+                loaded_data["metadata"]
+                if "metadata" in loaded_data.keys()
+                else {
+                    "host": socket.gethostname(),
+                    "uuid": generate_uuid(),
+                }
             )
+            if "uuid" not in self.metadata.keys():
+                self.metadata = {
+                    "host": socket.gethostname(),
+                    "uuid": generate_uuid(),
+                }
             self.packages = (
                 loaded_data["packages"] if "packages" in loaded_data.keys() else []
             )
