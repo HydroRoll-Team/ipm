@@ -1,11 +1,12 @@
 from pathlib import Path
 from .typing import StrPath
 from .utils import freeze, urlparser, loader
-from .models.ipk import InfiniProject, InfiniFrozenPackage
-from .models.lock import PackageLock
 from .exceptions import FileTypeMismatch, TomlLoadFailed, FileNotFoundError
 from .const import INDEX, STORAGE, SRC_HOME
 from .logging import info, success, warning, error
+from .models.ipk import InfiniProject, InfiniFrozenPackage
+from .models.lock import PackageLock
+from .models.index import Yggdrasil
 
 import toml
 import shutil
@@ -74,8 +75,20 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
     lock = PackageLock()
 
     if uri.isalpha():
-        # TODO
-        ...
+        yggdrasil = Yggdrasil(index)
+        if not lock.get_index(index):
+            yggdrasil.sync()
+            lock.add_index(index, yggdrasil.host, yggdrasil.uuid, dump=True)
+
+        if not (remote_ifp := yggdrasil.get(uri)):  # TODO 特定版本的捕获
+            return warning(f"未能在世界树[{yggdrasil.index}]中搜寻到规则包[{uri}].", echo)
+
+        ifp = loader.load_from_remote(
+            uri,
+            baseurl=index + remote_ifp["name"],
+            filename=remote_ifp["storage"],
+            echo=echo,
+        )
     elif urlparser.is_valid_url(uri):
         info(f"检定给定的 URI 地址[{uri}]为远程路径.", echo)
         filename = uri.rstrip("/").rpartition("/")[-1]
