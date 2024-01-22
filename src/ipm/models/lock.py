@@ -12,6 +12,7 @@ import socket
 
 class IpmLock(metaclass=ABCMeta):
     metadata: Dict[str, str]
+    indexes: List[Dict[str, Any]]
     packages: List[Dict[str, Any]]
     storages: List[Dict[str, Any]]
     source_path: Path
@@ -27,6 +28,7 @@ class IpmLock(metaclass=ABCMeta):
                 "host": socket.gethostname(),
                 "uuid": generate_uuid(),
             }
+            self.indexes = []
             self.packages = []
             self.storages = []
             self.dumps()
@@ -45,6 +47,9 @@ class IpmLock(metaclass=ABCMeta):
                     "host": socket.gethostname(),
                     "uuid": generate_uuid(),
                 }
+            self.indexes = (
+                loaded_data["indexes"] if "indexes" in loaded_data.keys() else []
+            )
             self.packages = (
                 loaded_data["packages"] if "packages" in loaded_data.keys() else []
             )
@@ -55,6 +60,7 @@ class IpmLock(metaclass=ABCMeta):
     def dumps(self) -> dict:
         return {
             "metadata": self.metadata,
+            "indexes": self.indexes,
             "packages": self.packages,
             "storages": self.storages,
         }
