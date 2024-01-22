@@ -2,7 +2,7 @@ from pathlib import Path
 from .typing import StrPath
 from .utils import freeze, urlparser, loader
 from .exceptions import FileTypeMismatch, TomlLoadFailed, FileNotFoundError
-from .const import INDEX, STORAGE, SRC_HOME
+from .const import INDEX, INDEX_PATH, STORAGE, SRC_HOME
 from .logging import info, success, warning, error
 from .models.ipk import InfiniProject, InfiniFrozenPackage
 from .models.lock import PackageLock
@@ -76,9 +76,12 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
 
     if uri.isalpha():
         yggdrasil = Yggdrasil(index)
-        if not lock.get_index(index):
+
+        if not (lock_index := lock.get_index(index)):
             yggdrasil.sync()
             lock.add_index(index, yggdrasil.host, yggdrasil.uuid, dump=True)
+        else:
+            yggdrasil.init(INDEX_PATH / lock_index["uuid"])
 
         if not (remote_ifp := yggdrasil.get(uri)):  # TODO 特定版本的捕获
             return warning(f"未能在世界树[{yggdrasil.index}]中搜寻到规则包[{uri}].", echo)
@@ -86,7 +89,7 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
         ifp = loader.load_from_remote(
             uri,
             baseurl=index + remote_ifp["name"],
-            filename=remote_ifp["storage"],
+            filename=remote_ifp["source"],
             echo=echo,
         )
     elif urlparser.is_valid_url(uri):
