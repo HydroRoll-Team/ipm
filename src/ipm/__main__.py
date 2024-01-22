@@ -12,10 +12,12 @@ main = typer.Typer(
 def install(
     uri: str = typer.Argument(help="Infini 包的统一资源标识符"),
     index: str = typer.Option(None, help="IPM 包服务器"),
+    upgrade: bool = typer.Option(False, "--upgrade", "-u", help="更新 Infini 包", is_flag=True),
+    force: bool = typer.Option(False, "--force", "-f", help="强制安装"),
 ):
     """安装一个 Infini 规则包到此计算机"""
     try:
-        api.install(uri, index, echo=True)
+        api.install(uri, index, upgrade=upgrade, force=force, echo=True)
     except IpmException as error:
         logger.error(error)
 
