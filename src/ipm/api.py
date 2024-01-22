@@ -87,6 +87,14 @@ def install(
     lock = PackageLock()
 
     if uri.isalpha():
+        # TODO 兼容 >= <= > < 等标识符
+        splited_uri = uri.split("==")
+        name = splited_uri[0]
+        if len(splited_uri) == 1:
+            version = None
+        else:
+            version = splited_uri[1]
+
         yggdrasil = Yggdrasil(index)
 
         if not (lock_index := lock.get_index(index)):
@@ -95,11 +103,11 @@ def install(
         else:
             yggdrasil.init(INDEX_PATH / lock_index["uuid"])
 
-        if not (remote_ifp := yggdrasil.get(uri)):  # TODO 特定版本的捕获
+        if not (remote_ifp := yggdrasil.get(name, version=version)):
             return warning(f"未能在世界树[{yggdrasil.index}]中搜寻到规则包[{uri}].", echo)
 
         ifp = loader.load_from_remote(
-            uri,
+            name,
             baseurl=index,
             filename=remote_ifp["source"],
             echo=echo,
