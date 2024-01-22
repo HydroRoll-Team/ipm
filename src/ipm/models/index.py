@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from .lock import PackageLock
 from ..const import INDEX_PATH
 from ..typing import Storage
+from ..logging import info, success
 from ..exceptions import LockLoadFailed
 
 import requests
@@ -28,7 +29,8 @@ class Yggdrasil:
         self.uuid = self.lock.metadata["uuid"]
         self.host = self.lock.metadata.get("host") or urlparse(self.index).netloc
 
-    def sync(self, echo: bool = False):  # TODO 输出内容
+    def sync(self, echo: bool = False):
+        info(f"正在从世界树[{self.index}]同步...", echo)
         lock_bytes = requests.get(self.index + "infini.lock").content
 
         temp_dir = tempfile.TemporaryDirectory()
@@ -51,6 +53,7 @@ class Yggdrasil:
         shutil.copy2(temp_lock_path, self.source_path)
         temp_dir.cleanup()
         self.init(self.source_path)
+        success(f"成功建立与世界树[{self.host}]的连接.")
 
     def get(self, name: str, version: str | None = None) -> Storage | None:
         return self.lock.get_particular_storage(name, version)
