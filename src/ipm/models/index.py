@@ -47,7 +47,7 @@ class Yggdrasil:
             temp_dir.cleanup()
             raise LockLoadFailed(f"地址[{self.index}]不是合法的世界树服务器.")
 
-        self.source_path = INDEX_PATH / self.uuid
+        self.source_path = INDEX_PATH / temp_lock.metadata["uuid"]
         self.source_path.mkdir(parents=True, exist_ok=True)
 
         shutil.copy2(temp_lock_path, self.source_path)
