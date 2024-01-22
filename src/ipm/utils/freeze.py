@@ -55,8 +55,10 @@ def extract_ipk(
     if not hash_path.exists():
         raise VerifyFailed(f"哈希文件[{hash_path}]不存在!")
 
+    info("进行文件校验中...")
     if not ifp_verify(ifp_path, hash_path.read_bytes()):
         raise VerifyFailed("文件完整性验证失败!")
+    info("文件校验成功.")
 
     temp_dir = tempfile.TemporaryDirectory()
 
