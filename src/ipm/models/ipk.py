@@ -76,6 +76,7 @@ class InfiniProject(InfiniPackage):
         self.requirements = data_load["requirements"]
         self.dependencies = data_load["dependencies"]
         # self.lock = ProjectLock
+        # TODO 项目锁
 
     def export_dict(self) -> dict:
         return {
