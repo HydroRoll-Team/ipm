@@ -10,6 +10,10 @@ class TomlLoadFailed(FileException):
     """Failed to load `infini.toml`"""
 
 
+class LockLoadFailed(FileException):
+    """Failed to load `infini.lock`"""
+
+
 class FileNotFoundError(FileException, FileNotFoundError):
     """Raises when file not founded"""
 
