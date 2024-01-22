@@ -77,11 +77,13 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
         # TODO
         ...
     elif urlparser.is_valid_url(uri):
-        filename = uri.rstrip("/").split("/")[-1]
+        info(f"检定给定的 URI 地址[{uri}]为远程路径.", echo)
+        filename = uri.rstrip("/").rpartition("/")[-1]
         ifp = loader.load_from_remote(
             "temp",
-            uri.rstrip("/").rsplit("/")[0],
+            uri.rstrip("/").rpartition("/")[0],
             filename,
+            echo=echo,
         )
     else:
         info(f"检定给定的 URI 地址[{uri}]为本地路径.", echo)
