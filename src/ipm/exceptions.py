@@ -36,3 +36,7 @@ class VerifyFailed(IpmException):
 
 class FileTypeMismatch(IpmException):
     """Ipk file type mismatch"""
+
+
+class PackageExsitsError(IpmException):
+    """Package already installed"""
