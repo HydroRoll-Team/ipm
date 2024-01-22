@@ -8,8 +8,8 @@ from typing import (
 )
 
 StrPath = str | Path
-Index = Dict[Literal["index", "host", "uuid"]]
+Index = Dict[Literal["index", "host", "uuid"], str]
 Package = Dict[
-    Literal["name", "version", "description", "requirements", "dependencies"]
+    Literal["name", "version", "description", "requirements", "dependencies"], str
 ]
-Storage = Dict[Literal["name", "version", "hash", "source"]]
+Storage = Dict[Literal["name", "version", "hash", "source"], str]
