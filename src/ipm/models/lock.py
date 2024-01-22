@@ -1,5 +1,5 @@
 from pathlib import Path
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 from . import ipk
 from ..typing import Dict, List, StrPath, Any, Package, Index, Storage
 from ..const import IPM_PATH, ATTENSION
@@ -11,6 +11,8 @@ import socket
 
 
 class IpmLock(metaclass=ABCMeta):
+    """IPM 锁基类"""
+
     metadata: Dict[str, str]
     indexes: List[Dict[str, Any]]
     packages: List[Dict[str, Any]]
@@ -22,7 +24,26 @@ class IpmLock(metaclass=ABCMeta):
         self.source_path = source_path
         return self.load() if auto_load else None
 
-    def load(self, auto_completion: bool = True):
+    @abstractmethod
+    def load(self) -> None:
+        raise NotImplementedError
+
+    @abstractmethod
+    def dumps(self) -> dict:
+        raise NotImplementedError
+
+    @abstractmethod
+    def dump(self) -> str:
+        raise NotImplementedError
+
+
+class PackageLock(IpmLock):
+    """全局包锁"""
+
+    def __init__(self, source_path: StrPath | None = None) -> None:
+        super().__init__(source_path=source_path or IPM_PATH / "infini.lock")
+
+    def load(self, auto_completion: bool = True) -> None:
         if not self.source_path.exists():
             if auto_completion:
                 self.metadata = {
@@ -78,13 +99,7 @@ class IpmLock(metaclass=ABCMeta):
         source_file = self.source_path.open("w", encoding="utf-8")
         source_file.write(data_to_dump)
         source_file.close()
-
-
-class PackageLock(IpmLock):
-    """全局包锁"""
-
-    def __init__(self, source_path: StrPath | None = None) -> None:
-        super().__init__(source_path=source_path or IPM_PATH / "infini.lock")
+        return data_to_dump
 
     def add_index(
         self, index_uri: str, host: str, uuid: str, dump: bool = False
@@ -227,4 +242,7 @@ class PackageLock(IpmLock):
 
 
 class ProjectLock:
-    ...
+    """IPM 项目锁"""
+
+    def __init__(self, source_path: StrPath | None = None) -> None:
+        super().__init__(source_path=source_path or Path(".").resolve() / "infini.lock")
