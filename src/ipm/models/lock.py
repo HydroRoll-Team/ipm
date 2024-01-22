@@ -3,7 +3,7 @@ from abc import ABCMeta
 from . import ipk
 from ..typing import Dict, List, StrPath, Any
 from ..const import IPM_PATH, ATTENSION
-from ..exceptions import SyntaxError
+from ..exceptions import SyntaxError, FileNotFoundError
 from ..utils.uuid import generate_uuid
 
 import toml
@@ -17,36 +17,44 @@ class IpmLock(metaclass=ABCMeta):
     storages: List[Dict[str, Any]]
     source_path: Path
 
-    def __init__(self, source_path: StrPath = IPM_PATH / "infini.lock") -> None:
+    def __init__(self, source_path: StrPath, auto_load: bool = True) -> None:
         IPM_PATH.mkdir(parents=True, exist_ok=True)
         self.source_path = source_path
-        self.load()
+        return self.load() if auto_load else None
 
-    def load(self):
+    def load(self, auto_completion: bool = True):
         if not self.source_path.exists():
-            self.metadata = {
-                "host": socket.gethostname(),
-                "uuid": generate_uuid(),
-            }
-            self.indexes = []
-            self.packages = []
-            self.storages = []
-            self.dumps()
-        else:
-            loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
-            self.metadata = (
-                loaded_data["metadata"]
-                if "metadata" in loaded_data.keys()
-                else {
-                    "host": socket.gethostname(),
-                    "uuid": generate_uuid(),
-                }
-            )
-            if "uuid" not in self.metadata.keys():
+            if auto_completion:
                 self.metadata = {
                     "host": socket.gethostname(),
                     "uuid": generate_uuid(),
                 }
+                self.indexes = []
+                self.packages = []
+                self.storages = []
+                self.dumps()
+            else:
+                raise FileNotFoundError(f"锁文件不存在!")
+        else:
+            loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
+
+            if "metadata" not in loaded_data.keys():
+                if not auto_completion:
+                    raise SyntaxError(f"锁文件缺失[metadata]项.")
+                else:
+                    self.metadata = {
+                        "host": socket.gethostname(),
+                        "uuid": generate_uuid(),
+                    }
+            else:
+                self.metadata = loaded_data["metadata"]
+
+            if "uuid" not in self.metadata.keys():
+                if auto_completion:
+                    self.metadata["uuid"] = generate_uuid()
+                else:
+                    raise SyntaxError(f"锁文件[metadata]项缺失[uuid]项.")
+
             self.indexes = (
                 loaded_data["indexes"] if "indexes" in loaded_data.keys() else []
             )
@@ -75,8 +83,8 @@ class IpmLock(metaclass=ABCMeta):
 class PackageLock(IpmLock):
     """全局包锁"""
 
-    def __init__(self) -> None:
-        super().__init__()
+    def __init__(self, source_path: StrPath | None = None) -> None:
+        super().__init__(source_path=source_path or IPM_PATH / "infini.lock")
 
     def add_index(
         self, index_uri: str, host: str, uuid: str, dump: bool = False
