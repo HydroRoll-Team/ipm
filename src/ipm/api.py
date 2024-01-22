@@ -1,9 +1,15 @@
 from pathlib import Path
 from .typing import StrPath
 from .utils import freeze, urlparser, loader
-from .exceptions import FileTypeMismatch, TomlLoadFailed, FileNotFoundError
 from .const import INDEX, INDEX_PATH, STORAGE, SRC_HOME
 from .logging import info, success, warning, error
+from .exceptions import (
+    FileTypeMismatch,
+    TomlLoadFailed,
+    FileNotFoundError,
+    PackageExsitsError,
+)
+from .utils.version import require_update
 from .models.ipk import InfiniProject, InfiniFrozenPackage
 from .models.lock import PackageLock
 from .models.index import Yggdrasil
@@ -67,7 +73,13 @@ def extract(
     return freeze.extract_ipk(source_path, dist_path, echo)
 
 
-def install(uri: str, index: str = "", echo: bool = False) -> None:
+def install(
+    uri: str,
+    index: str = "",
+    upgrade: bool = False,
+    force: bool = False,
+    echo: bool = False,
+) -> None:
     info("正在初始化 IPM 环境...", echo)
 
     SRC_HOME.mkdir(parents=True, exist_ok=True)
@@ -113,7 +125,26 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
             raise FileTypeMismatch("文件类型与预期[.ipk]不匹配.")
 
     if lock.has_package(ifp.name):
-        raise  # TODO
+        exists_version = lock.get_package(ifp.name)["version"]
+        if require_update(exists_version, ifp.version):
+            if not upgrade:
+                raise PackageExsitsError(
+                    f"包[{ifp.name}]版本[{exists_version}]已经安装了, 使用[--upgrade]参数进行升级."
+                )
+            else:
+                info(f"发现已经安装的[{ifp.name}={exists_version}], 卸载中...")
+                uninstall(ifp.name, confirm=True, echo=echo)
+                success(f"[{ifp.name}={exists_version}]卸载完成...")
+        else:
+            if not force:
+                raise PackageExsitsError(
+                    f"已经安装了[{ifp.name}]版本[{exists_version}], 使用[--force]参数进行强制覆盖."
+                )
+            else:
+                info(f"发现已经安装的[{ifp.name}={exists_version}], 卸载中...")
+                uninstall(ifp.name, confirm=True, echo=echo)
+                success(f"[{ifp.name}={exists_version}]卸载完成...")
+        lock.load(auto_completion=True)
 
     info(f"开始安装[{ifp.name}]中...", echo)
     ipk = extract(STORAGE / ifp.name / ifp.default_name, SRC_HOME, echo)
