@@ -133,9 +133,7 @@ class PackageLock(IpmLock):
         for package in self.packages:
             if "name" not in package.keys():
                 raise SyntaxError("异常的锁文件!")
-            if (
-                package["name"] == ipk.name and package["version"] == ipk.version
-            ):  # TODO 同名包处理
+            if package["name"] == ipk.name:
                 self.storages.remove(package)
                 break
 
