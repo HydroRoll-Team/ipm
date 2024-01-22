@@ -78,11 +78,56 @@ class PackageLock(IpmLock):
     def __init__(self) -> None:
         super().__init__()
 
+    def add_index(
+        self, index_uri: str, host: str, uuid: str, dump: bool = False
+    ) -> str:
+        for index in self.indexes:
+            if "index" not in index.keys():
+                raise SyntaxError("异常的锁文件!")
+            if index["index"] == index_uri:
+                self.storages.remove(index)
+                break
+
+        self.indexes.append(
+            {
+                "index": index_uri,
+                "host": host,
+                "uuid": uuid,
+            }
+        )
+        return self.dump() if dump else ""
+
+    def remove_index(self, uuid: str, dump: bool = False) -> str:
+        uuid = uuid.strip()
+        for index in self.indexes:
+            if "name" not in index.keys():
+                raise SyntaxError("异常的锁文件!")
+            if index["name"] == uuid:
+                self.packages.remove(index)
+                break
+        return self.dump() if dump else ""
+
+    def get_index(self, index_uri: str) -> dict | None:
+        index_uri = index_uri.strip()
+        for index in self.indexes:
+            if index["index"] == index_uri:
+                return index
+        return None
+
+    def has_index(self, index_uri: str) -> bool:
+        index_uri = index_uri.strip()
+        for index in self.indexes:
+            if index["index"] == index_uri:
+                return True
+        return False
+
     def add_package(self, ipk: "ipk.InfiniProject", dump: bool = False) -> str:
         for package in self.packages:
             if "name" not in package.keys():
                 raise SyntaxError("异常的锁文件!")
-            if package["name"] == ipk.name and package["version"] == ipk.version:
+            if (
+                package["name"] == ipk.name and package["version"] == ipk.version
+            ):  # TODO 同名包处理
                 self.storages.remove(package)
                 break
 
@@ -96,6 +141,20 @@ class PackageLock(IpmLock):
             }
         )
         return self.dump() if dump else ""
+
+    def get_package(self, name: str) -> dict | None:
+        name = name.strip()
+        for package in self.packages:
+            if package["name"] == name:
+                return package
+        return None
+
+    def has_package(self, name: str) -> bool:
+        name = name.strip()
+        for package in self.packages:
+            if package["name"] == name:
+                return True
+        return False
 
     def remove_package(self, name: str, dump: bool = False) -> str:
         name = name.strip()
@@ -135,20 +194,6 @@ class PackageLock(IpmLock):
                 break
         return self.dump() if dump else ""
 
-    def get_package(self, name: str) -> dict | None:
-        name = name.strip()
-        for package in self.packages:
-            if package["name"] == name:
-                return package
-        return None
-
-    def has_package(self, name: str) -> bool:
-        name = name.strip()
-        for package in self.packages:
-            if package["name"] == name:
-                return True
-        return False
-
     def get_storage(self, name: str) -> dict | None:
         name = name.strip()
         for storage in self.storages:
@@ -156,7 +201,7 @@ class PackageLock(IpmLock):
                 return storage
         return None
 
-    def has_storage(self, name: str) -> dict | None:
+    def has_storage(self, name: str) -> bool:
         name = name.strip()
         for storage in self.storages:
             if storage["name"] == name:
