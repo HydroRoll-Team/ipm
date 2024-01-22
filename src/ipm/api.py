@@ -94,13 +94,15 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
         else:
             raise FileTypeMismatch("文件类型与预期[.ipk]不匹配.")
 
-    if lock.has_ipk(ifp.name):
+    if lock.has_package(ifp.name):
         raise  # TODO
 
     info(f"开始安装[{ifp.name}]中...", echo)
     ipk = extract(STORAGE / ifp.name / ifp.default_name, SRC_HOME, echo)
     info("正在处理全局包锁...", echo)
-    lock.add(ifp, dump=True)
+    if not lock.has_storage(ifp.name):
+        lock.add_storage(ifp, dump=True)
+    lock.add_package(ipk, dump=True)
     info("全局锁已处理完毕.", echo)
 
     success(f"包[{ipk.name}]成功安装在[{ipk.source_path}].", echo)
@@ -110,12 +112,11 @@ def uninstall(name: str, confirm: bool = False, echo: bool = False) -> None:
     lock = PackageLock()
     path = SRC_HOME / name.strip()
 
-    if not (install_info := lock.get_ipk(name)):
+    if not (install_info := lock.get_package(name)):
         return warning(f"由于[{name}]未被安装, 故忽略卸载操作.", echo)
 
     info(f"发现已经安装的[{name}]版本[{install_info['version']}]:", echo)
     info(f"  将会清理: {path}", echo)
-    # TODO: 拆分安装lock和安装ipk的lock
     confirm: bool = (
         True
         if (input("你确定要继续 (Y/n) ").upper() in ("", "Y") if not confirm else confirm)
@@ -126,5 +127,5 @@ def uninstall(name: str, confirm: bool = False, echo: bool = False) -> None:
     else:
         return info("忽略.", echo)
 
-    lock.remove(name, dump=True)
+    lock.remove_package(name, dump=True)
     success(f"规则包[{name}]卸载完成!", echo)

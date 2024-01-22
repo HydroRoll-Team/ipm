@@ -11,6 +11,7 @@ import toml
 class IpmLock(metaclass=ABCMeta):
     metadata: Dict[str, str]
     packages: List[Dict[str, Any]]
+    storages: List[Dict[str, Any]]
     source_path: Path
 
     def __init__(self, source_path: StrPath = IPM_PATH / "infini.lock") -> None:
@@ -22,9 +23,8 @@ class IpmLock(metaclass=ABCMeta):
         if not self.source_path.exists():
             self.metadata = {}
             self.packages = []
-            source_file = self.source_path.open("w", encoding="utf-8")
-            source_file.write(ATTENSION + toml.dumps(self.dumps()))
-            source_file.close()
+            self.storages = []
+            self.dumps()
         else:
             loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
             self.metadata = (
@@ -33,9 +33,16 @@ class IpmLock(metaclass=ABCMeta):
             self.packages = (
                 loaded_data["packages"] if "packages" in loaded_data.keys() else []
             )
+            self.storages = (
+                loaded_data["storages"] if "storages" in loaded_data.keys() else []
+            )
 
     def dumps(self) -> dict:
-        return {"metadata": self.metadata, "packages": self.packages}
+        return {
+            "metadata": self.metadata,
+            "packages": self.packages,
+            "storages": self.storages,
+        }
 
     def dump(self) -> str:
         data_to_dump = ATTENSION + toml.dumps(self.dumps())
@@ -50,17 +57,26 @@ class PackageLock(IpmLock):
     def __init__(self) -> None:
         super().__init__()
 
-    def add(self, ifp: "ipk.InfiniFrozenPackage", dump: bool = False) -> str:
+    def add_package(self, ipk: "ipk.InfiniProject", dump: bool = False) -> str:
+        for package in self.packages:
+            if "name" not in package.keys():
+                raise SyntaxError("异常的锁文件!")
+            if package["name"] == ipk.name and package["version"] == ipk.version:
+                self.storages.remove(package)
+                break
+
         self.packages.append(
             {
-                "name": ifp.name,
-                "version": ifp.version,
-                "hash": ifp.hash,
+                "name": ipk.name,
+                "version": ipk.version,
+                "description": ipk.description,
+                "requirements": ipk.requirements,
+                "dependencies": ipk.dependencies,
             }
         )
         return self.dump() if dump else ""
 
-    def remove(self, name: str, dump: bool = False) -> str:
+    def remove_package(self, name: str, dump: bool = False) -> str:
         name = name.strip()
         for package in self.packages:
             if "name" not in package.keys():
@@ -70,17 +86,59 @@ class PackageLock(IpmLock):
                 break
         return self.dump() if dump else ""
 
-    def get_ipk(self, name: str) -> dict | None:
+    def add_storage(self, ifp: "ipk.InfiniFrozenPackage", dump: bool = False) -> str:
+        for storage in self.storages:
+            if "name" not in storage.keys():
+                raise SyntaxError("异常的锁文件!")
+            if storage["name"] == ifp.name and storage["version"] == ifp.version:
+                self.storages.remove(storage)
+                break
+
+        self.storages.append(
+            {
+                "name": ifp.name,
+                "version": ifp.version,
+                "hash": ifp.hash,
+                "source": f"storage/{ifp.name}/{ifp.default_name}",
+            }
+        )
+        return self.dump() if dump else ""
+
+    def remove_storage(self, name: str, dump: bool = False) -> str:
+        name = name.strip()
+        for storage in self.storages:
+            if "name" not in storage.keys():
+                raise SyntaxError("异常的锁文件!")
+            if storage["name"] == name:
+                self.storages.remove(storage)
+                break
+        return self.dump() if dump else ""
+
+    def get_package(self, name: str) -> dict | None:
         name = name.strip()
         for package in self.packages:
             if package["name"] == name:
                 return package
         return None
 
-    def has_ipk(self, name: str) -> bool:
+    def has_package(self, name: str) -> bool:
         name = name.strip()
         for package in self.packages:
             if package["name"] == name:
+                return True
+        return False
+
+    def get_storage(self, name: str) -> dict | None:
+        name = name.strip()
+        for storage in self.storages:
+            if storage["name"] == name:
+                return storage
+        return None
+
+    def has_storage(self, name: str) -> dict | None:
+        name = name.strip()
+        for storage in self.storages:
+            if storage["name"] == name:
                 return True
         return False
 
