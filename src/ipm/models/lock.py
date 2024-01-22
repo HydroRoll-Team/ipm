@@ -1,7 +1,7 @@
 from pathlib import Path
 from abc import ABCMeta
 from . import ipk
-from ..typing import Dict, List, StrPath, Any
+from ..typing import Dict, List, StrPath, Any, Package, Index, Storage
 from ..const import IPM_PATH, ATTENSION
 from ..exceptions import SyntaxError, FileNotFoundError
 from ..utils.uuid import generate_uuid
@@ -115,7 +115,7 @@ class PackageLock(IpmLock):
                 break
         return self.dump() if dump else ""
 
-    def get_index(self, index_uri: str) -> dict | None:
+    def get_index(self, index_uri: str) -> Index | None:
         index_uri = index_uri.strip()
         for index in self.indexes:
             if index["index"] == index_uri:
@@ -150,7 +150,7 @@ class PackageLock(IpmLock):
         )
         return self.dump() if dump else ""
 
-    def get_package(self, name: str) -> dict | None:
+    def get_package(self, name: str) -> Package | None:
         name = name.strip()
         for package in self.packages:
             if package["name"] == name:
@@ -202,10 +202,21 @@ class PackageLock(IpmLock):
                 break
         return self.dump() if dump else ""
 
-    def get_storage(self, name: str) -> dict | None:
+    def get_storage(self, name: str) -> Storage | None:
         name = name.strip()
         for storage in self.storages:
             if storage["name"] == name:
+                return storage
+        return None
+
+    def get_particular_storage(
+        self, name: str, version: str | None = None
+    ) -> Storage | None:
+        name = name.strip()
+        for storage in self.storages:
+            if storage["name"] == name and (
+                version is None or storage["version"] == version
+            ):
                 return storage
         return None
 
