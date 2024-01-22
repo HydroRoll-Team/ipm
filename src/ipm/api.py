@@ -88,7 +88,7 @@ def install(uri: str, index: str = "", echo: bool = False) -> None:
 
         ifp = loader.load_from_remote(
             uri,
-            baseurl=index + remote_ifp["name"],
+            baseurl=index,
             filename=remote_ifp["source"],
             echo=echo,
         )
