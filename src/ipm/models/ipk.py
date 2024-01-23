@@ -1,9 +1,11 @@
 from pathlib import Path
 from . import lock
-from ..typing import List, Dict, Literal
+from ..typing import List, Dict, Literal, StrPath, Any
 from ..exceptions import SyntaxError, TomlLoadFailed
 
 import toml
+
+ProjectLock = lock.ProjectLock
 
 
 class Author:
@@ -49,12 +51,10 @@ class InfiniProject(InfiniPackage):
     authors: Authors
     license: str
 
-    requirements: dict
-    dependencies: dict
+    requirements: Dict[str, Any]
+    dependencies: Dict[str, Any]
 
-    lock: lock.ProjectLock
-
-    def __init__(self, path: str | Path = ".") -> None:
+    def __init__(self, path: StrPath = ".") -> None:
         self.source_path = Path(path).resolve()
         toml_path = self.source_path / "infini.toml"
 
@@ -75,10 +75,8 @@ class InfiniProject(InfiniPackage):
 
         self.requirements = data_load["requirements"]
         self.dependencies = data_load["dependencies"]
-        # self.lock = ProjectLock
-        # TODO 项目锁
 
-    def export_dict(self) -> dict:
+    def dumps(self) -> dict:
         return {
             "infini": {
                 "name": self.source_path.name,
@@ -93,6 +91,54 @@ class InfiniProject(InfiniPackage):
             "requirements": self.requirements,
             "dependencies": self.dependencies,
         }
+
+    def dump(self) -> str:
+        return toml.dump(
+            self.dumps(), (self.source_path / "infini.toml").open("w", encoding="utf-8")
+        )
+
+    def require(self, name: str, version: str, dump: bool = False) -> None:
+        for requirement in self.requirements.keys():
+            if requirement == name:
+                self.requirements.pop(name)
+                break
+
+        self.requirements[name] = version or "latest"
+        self.dump() if dump else ""
+
+    def unrequire(self, name: str, dump: bool = False) -> None:
+        name = name.strip()
+        for requirement in self.requirements:
+            if requirement == name:
+                self.requirements.pop(name)
+                break
+        self.dump() if dump else ""
+
+    def add(self, name: str, version: str, dump: bool = False) -> None:
+        for dependency in self.dependencies:
+            if "name" not in dependency.keys():
+                raise SyntaxError("异常的锁文件!")
+            if dependency["name"] == name:
+                self.dependencies.remove(dependency)
+                break
+
+        self.dependencies.append(
+            {
+                "name": name,
+                "version": version,
+            }
+        )
+        self.dump() if dump else ""
+
+    def remove(self, name: str, dump: bool = False) -> None:
+        name = name.strip()
+        for dependency in self.dependencies:
+            if "name" not in dependency.keys():
+                raise SyntaxError("异常的锁文件!")
+            if dependency["name"] == name:
+                self.dependencies.remove(dependency)
+                break
+        self.dump() if dump else ""
 
 
 class InfiniFrozenPackage(InfiniPackage):
