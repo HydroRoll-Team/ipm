@@ -18,6 +18,12 @@ import toml
 import shutil
 
 
+def check(source_path: StrPath) -> None:
+    source_path = Path(source_path).resolve()
+    lock = ProjectLock(source_path)
+    lock.init()
+
+
 def init(source_path: StrPath, force: bool = False, echo: bool = False) -> None:
     source_path = Path(source_path).resolve()
     if (toml_path := (source_path / "infini.toml")).exists() and not force:
