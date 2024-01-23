@@ -282,7 +282,7 @@ class ProjectLock(IpmLock):
                     self.requirements.append(sub_requirement)
 
     def init(self) -> None:
-        pkg = ipk.InfiniProject()
+        pkg = ipk.InfiniProject(self.source_path.parent)
         self.metadata = {
             "name": pkg.name,
             "version": pkg.version,
