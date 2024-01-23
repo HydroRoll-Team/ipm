@@ -2,7 +2,7 @@ from pathlib import Path
 from abc import ABCMeta, abstractmethod
 from . import ipk
 from ..typing import Dict, List, StrPath, Any, Package, Index, Storage
-from ..const import IPM_PATH, ATTENSION
+from ..const import IPM_PATH, ATTENSION, SRC_HOME
 from ..exceptions import SyntaxError, FileNotFoundError
 from ..utils.uuid import generate_uuid
 
@@ -237,6 +237,9 @@ class PackageLock(IpmLock):
                 return True
         return False
 
+    def get_ipk(self, name: str) -> "ipk.InfiniProject":
+        return ipk.InfiniProject(Path(SRC_HOME / name.strip()).resolve())
+
 
 class ProjectLock(IpmLock):
     """IPM 项目锁"""
@@ -244,12 +247,39 @@ class ProjectLock(IpmLock):
     requirements: List[Dict[str, Any]]
     dependencies: List[Dict[str, Any]]
 
-    def __init__(self, source_path: StrPath | None = None) -> None:
-        super().__init__(source_path=source_path or Path(".").resolve() / "infini.lock")
+    def __init__(
+        self, source_path: StrPath | None = None, auto_load: bool = True
+    ) -> None:
+        super().__init__(
+            source_path=source_path or Path(".").resolve() / "infini.lock",
+            auto_load=auto_load,
+        )
+
+    def _check(self, name: str) -> Dict[str, Any]:  # TODO 依照版本 version: str 区分
+        requirements = []
+        for name, sub_requirement in (
+            PackageLock().get_ipk(name.strip()).requirements.values()
+        ):
+            exists = False
+            for requirement in requirements:
+                if requirement["name"] == name:
+                    exists = True
+                    break
+            if not exists:
+                sub_requirement["name"] = name
+                requirements.append(sub_requirement)
+        return requirements
 
     def _init(self) -> None:
-        # TODO 实现搜索下一级依赖
-        ...
+        for abs_requirement in self.requirements.copy():
+            sub_requirements = self._check(abs_requirement["name"])
+            for sub_requirement in sub_requirements:
+                for requirement in self.requirements:
+                    if requirement["name"] == sub_requirement["name"]:
+                        exists = True
+                        break
+                if not exists:
+                    self.requirements.append(sub_requirement)
 
     def init(self) -> None:
         pkg = ipk.InfiniProject()
@@ -268,7 +298,7 @@ class ProjectLock(IpmLock):
             for name, version in pkg.dependencies.values()
         ]
         self._init()
-        self.dumps()
+        self.dump()
 
     def load(self) -> None:
         pkg = ipk.InfiniProject()
@@ -307,7 +337,6 @@ class ProjectLock(IpmLock):
         }
 
     def require(self, name: str, version: str, dump: bool = False) -> None:
-        # TODO 依赖的依赖检索
         for requirement in self.requirements:
             if "name" not in requirement.keys():
                 raise SyntaxError("异常的锁文件!")
