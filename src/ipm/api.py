@@ -19,9 +19,10 @@ import shutil
 
 
 def check(source_path: StrPath) -> None:
-    source_path = Path(source_path).resolve()
-    lock = ProjectLock(source_path)
-    lock.init()
+    return ProjectLock(
+        Path(source_path).resolve() / "infini.lock",
+        auto_load=False,
+    ).init()
 
 
 def init(source_path: StrPath, force: bool = False, echo: bool = False) -> None:
