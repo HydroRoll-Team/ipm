@@ -30,3 +30,9 @@ def test_install():
 
 def test_uninstall():
     api.uninstall("test", confirm=True)
+
+
+def test_check():
+    api.new("test")
+    api.check("test")
+    shutil.rmtree("test", ignore_errors=True)
