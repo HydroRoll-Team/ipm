@@ -196,10 +196,12 @@ def uninstall(name: str, confirm: bool = False, echo: bool = False) -> None:
 
 
 def require(name: str, index: str = "", echo: bool = False) -> None:
-    # TODO 输出
+    info("检查环境中...", echo)
     pkg_lock = PackageLock()
     lock = ProjectLock()
     ipk = InfiniProject()
+    info("环境检查完毕.", echo)
+
     splited_name = name.split("==")  # TODO 支持 >= <= > < 标识
     name = splited_name[0]
 
@@ -209,6 +211,7 @@ def require(name: str, index: str = "", echo: bool = False) -> None:
         version = None
 
     if not pkg_lock.has_package(name):
+        info(f"检测到需要依赖的规则包[{name}]不存在, 安装中...", echo)
         install(
             f"name=={version}" if version else name,
             index=index,
@@ -217,24 +220,29 @@ def require(name: str, index: str = "", echo: bool = False) -> None:
             echo=True,
         )
 
+    info("处理 Infini 项目依赖锁...", echo)
     ipk.require(name, version, dump=True)
     lock.require(name, version, dump=True)
+    success("规则包依赖新增完成.", echo)
 
 
-def unrequire(name: str):
-    # TODO 输出
+def unrequire(name: str, echo: bool = False):
+    info("处理 Infini 项目依赖锁...", echo)
     ipk = InfiniProject()
     lock = ProjectLock()
 
     ipk.unrequire(name, dump=True)
     lock.unrequire(name, dump=True)
+    success("规则包依赖删除完成.", echo)
 
 
 def add(name: str, index: str = "", echo: bool = False) -> None:
-    # TODO 输出
+    info("检查环境中...", echo)
     pkg_lock = PackageLock()
     lock = ProjectLock()
     ipk = InfiniProject()
+    info("环境检查完毕.", echo)
+
     splited_name = name.split("==")  # TODO 支持 >= <= > < 标识
     name = splited_name[0]
 
@@ -244,22 +252,20 @@ def add(name: str, index: str = "", echo: bool = False) -> None:
         version = None
 
     if not pkg_lock.has_package(name):
-        install(
-            f"name=={version}" if version else name,
-            index=index,
-            upgrade=True,
-            force=True,
-            echo=True,
-        )
+        # TODO pip 环境安装
+        ...
 
+    info("处理 Infini 项目依赖锁...", echo)
     ipk.add(name, version, dump=True)
     lock.add(name, version, dump=True)
+    success("环境依赖新增完成.", echo)
 
 
-def remove(name: str):
-    # TODO 输出
+def remove(name: str, echo: bool = False):
+    info("处理 Infini 项目依赖锁...", echo)
     ipk = InfiniProject()
     lock = ProjectLock()
 
     ipk.remove(name, dump=True)
     lock.remove(name, dump=True)
+    success("环境依赖删除完成.", echo)

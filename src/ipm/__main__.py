@@ -95,7 +95,7 @@ def require(
 def unrequire(name: str = typer.Argument(help="Infini 包名")):
     """删除规则包依赖"""
     try:
-        api.unrequire(name)
+        api.unrequire(name, echo=True)
     except IpmException as error:
         logger.error(error)
 
@@ -107,7 +107,7 @@ def add(
 ):
     """新增环境依赖"""
     try:
-        api.add(name, index=index)
+        api.add(name, index=index, echo=True)
     except IpmException as error:
         logger.error(error)
 
@@ -116,7 +116,7 @@ def add(
 def remove(name: str = typer.Argument(help="Infini 包名")):
     """删除环境依赖"""
     try:
-        api.remove(name)
+        api.remove(name, echo=True)
     except IpmException as error:
         logger.error(error)
 
