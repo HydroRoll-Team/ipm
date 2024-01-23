@@ -9,6 +9,15 @@ main = typer.Typer(
 
 
 @main.command()
+def check():
+    """分析 Infini 项目并创建项目锁"""
+    try:
+        api.check(".")
+    except IpmException as error:
+        logger.error(error)
+
+
+@main.command()
 def install(
     uri: str = typer.Argument(help="Infini 包的统一资源标识符"),
     index: str = typer.Option(None, help="世界树服务器地址"),
