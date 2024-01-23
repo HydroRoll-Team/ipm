@@ -11,8 +11,8 @@ main = typer.Typer(
 @main.command()
 def install(
     uri: str = typer.Argument(help="Infini 包的统一资源标识符"),
-    index: str = typer.Option(None, help="IPM 包服务器"),
-    upgrade: bool = typer.Option(False, "--upgrade", "-u", help="更新 Infini 包", is_flag=True),
+    index: str = typer.Option(None, help="世界树服务器地址"),
+    upgrade: bool = typer.Option(False, "--upgrade", "-u", help="更新 Infini 包"),
     force: bool = typer.Option(False, "--force", "-f", help="强制安装"),
 ):
     """安装一个 Infini 规则包到此计算机"""
@@ -68,6 +68,60 @@ def uninstall(package: str = typer.Argument(help="Infini 项目路径")):
         api.uninstall(package, echo=True)
     except IpmException as error:
         logger.error(error)
+
+
+@main.command()
+def require(
+    name: str = typer.Argument(help="Infini 包名"),
+    index: str = typer.Option(None, help="世界树服务器地址"),
+):
+    """新增规则包依赖"""
+    try:
+        api.require(name, index, echo=True)
+    except IpmException as error:
+        logger.error(error)
+
+
+@main.command()
+def unrequire(name: str = typer.Argument(help="Infini 包名")):
+    """删除规则包依赖"""
+    try:
+        api.unrequire(name)
+    except IpmException as error:
+        logger.error(error)
+
+
+@main.command()
+def add(
+    name: str = typer.Argument(help="Infini 包名"),
+    index: str = typer.Option(None, help="世界树服务器地址"),
+):
+    """新增环境依赖"""
+    try:
+        api.add(name, index=index)
+    except IpmException as error:
+        logger.error(error)
+
+
+@main.command()
+def remove(name: str = typer.Argument(help="Infini 包名")):
+    """删除环境依赖"""
+    try:
+        api.remove(name)
+    except IpmException as error:
+        logger.error(error)
+
+
+# TODO
+@main.command()
+def collect():
+    ...
+
+
+# TODO
+@main.command()
+def update():
+    ...
 
 
 if __name__ == "__main__":
