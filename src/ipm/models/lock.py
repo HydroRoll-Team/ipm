@@ -247,19 +247,34 @@ class ProjectLock(IpmLock):
     def __init__(self, source_path: StrPath | None = None) -> None:
         super().__init__(source_path=source_path or Path(".").resolve() / "infini.lock")
 
+    def _init(self) -> None:
+        # TODO 实现搜索下一级依赖
+        ...
+
+    def init(self) -> None:
+        pkg = ipk.InfiniProject()
+        self.metadata = {
+            "name": pkg.name,
+            "version": pkg.version,
+            "description": pkg.description,
+            "license": pkg.license,
+        }
+        self.requirements = [
+            {"name": name, "version": version or "latest"}
+            for name, version in pkg.requirements.values()
+        ]
+        self.dependencies = [
+            {"name": name, "version": version or "latest"}
+            for name, version in pkg.dependencies.values()
+        ]
+        self._init()
+        self.dumps()
+
     def load(self) -> None:
         pkg = ipk.InfiniProject()
 
         if not self.source_path.exists():
-            self.metadata = {
-                "name": pkg.name,
-                "version": pkg.version,
-                "description": pkg.description,
-                "license": pkg.license,
-            }
-            self.requirements = []
-            self.dependencies = []
-            self.dumps()
+            self.init()
         else:
             loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
 
