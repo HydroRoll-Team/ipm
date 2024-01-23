@@ -13,11 +13,8 @@ import socket
 class IpmLock(metaclass=ABCMeta):
     """IPM 锁基类"""
 
-    metadata: Dict[str, str]
-    indexes: List[Dict[str, Any]]
-    packages: List[Dict[str, Any]]
-    storages: List[Dict[str, Any]]
     source_path: Path
+    metadata: Dict[str, str]
 
     def __init__(self, source_path: StrPath, auto_load: bool = True) -> None:
         IPM_PATH.mkdir(parents=True, exist_ok=True)
@@ -32,13 +29,20 @@ class IpmLock(metaclass=ABCMeta):
     def dumps(self) -> dict:
         raise NotImplementedError
 
-    @abstractmethod
     def dump(self) -> str:
-        raise NotImplementedError
+        data_to_dump = ATTENSION + toml.dumps(self.dumps())
+        source_file = self.source_path.open("w", encoding="utf-8")
+        source_file.write(data_to_dump)
+        source_file.close()
+        return data_to_dump
 
 
 class PackageLock(IpmLock):
     """全局包锁"""
+
+    indexes: List[Dict[str, Any]]
+    packages: List[Dict[str, Any]]
+    storages: List[Dict[str, Any]]
 
     def __init__(self, source_path: StrPath | None = None) -> None:
         super().__init__(source_path=source_path or IPM_PATH / "infini.lock")
@@ -93,13 +97,6 @@ class PackageLock(IpmLock):
             "packages": self.packages,
             "storages": self.storages,
         }
-
-    def dump(self) -> str:
-        data_to_dump = ATTENSION + toml.dumps(self.dumps())
-        source_file = self.source_path.open("w", encoding="utf-8")
-        source_file.write(data_to_dump)
-        source_file.close()
-        return data_to_dump
 
     def add_index(
         self, index_uri: str, host: str, uuid: str, dump: bool = False
@@ -241,8 +238,108 @@ class PackageLock(IpmLock):
         return False
 
 
-class ProjectLock:
+class ProjectLock(IpmLock):
     """IPM 项目锁"""
+
+    requirements: List[Dict[str, Any]]
+    dependencies: List[Dict[str, Any]]
 
     def __init__(self, source_path: StrPath | None = None) -> None:
         super().__init__(source_path=source_path or Path(".").resolve() / "infini.lock")
+
+    def load(self) -> None:
+        pkg = ipk.InfiniProject()
+
+        if not self.source_path.exists():
+            self.metadata = {
+                "name": pkg.name,
+                "version": pkg.version,
+                "description": pkg.description,
+                "license": pkg.license,
+            }
+            self.requirements = []
+            self.dependencies = []
+            self.dumps()
+        else:
+            loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
+
+            self.metadata = (
+                loaded_data["metadata"]
+                if "metadata" in loaded_data.keys()
+                else {
+                    "name": pkg.name,
+                    "version": pkg.version,
+                    "description": pkg.description,
+                    "license": pkg.license,
+                }
+            )
+            self.requirements = (
+                loaded_data["requirements"]
+                if "requirements" in loaded_data.keys()
+                else []
+            )
+            self.dependencies = (
+                loaded_data["dependencies"]
+                if "dependencies" in loaded_data.keys()
+                else []
+            )
+
+    def dumps(self) -> Dict:
+        return {
+            "metadata": self.metadata,
+            "requirements": self.requirements,
+            "dependencies": self.dependencies,
+        }
+
+    def require(self, name: str, version: str, dump: bool = False) -> None:
+        # TODO 依赖的依赖检索
+        for requirement in self.requirements:
+            if "name" not in requirement.keys():
+                raise SyntaxError("异常的锁文件!")
+            if requirement["name"] == name:
+                self.requirements.remove(requirement)
+                break
+
+        self.requirements.append(
+            {
+                "name": name,
+                "version": version,
+            }
+        )
+        return self.dump() if dump else ""
+
+    def unrequire(self, name: str, dump: bool = False) -> None:
+        name = name.strip()
+        for requirement in self.requirements:
+            if "name" not in requirement.keys():
+                raise SyntaxError("异常的锁文件!")
+            if requirement["name"] == name:
+                self.requirements.remove(requirement)
+                break
+        return self.dump() if dump else ""
+
+    def add(self, name: str, version: str, dump: bool = False) -> None:
+        for dependency in self.dependencies:
+            if "name" not in dependency.keys():
+                raise SyntaxError("异常的锁文件!")
+            if dependency["name"] == name:
+                self.dependencies.remove(dependency)
+                break
+
+        self.dependencies.append(
+            {
+                "name": name,
+                "version": version,
+            }
+        )
+        return self.dump() if dump else ""
+
+    def remove(self, name: str, dump: bool = False) -> None:
+        name = name.strip()
+        for dependency in self.dependencies:
+            if "name" not in dependency.keys():
+                raise SyntaxError("异常的锁文件!")
+            if dependency["name"] == name:
+                self.dependencies.remove(dependency)
+                break
+        return self.dump() if dump else ""
