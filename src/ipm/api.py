@@ -11,7 +11,7 @@ from .exceptions import (
 )
 from .utils.version import require_update
 from .models.ipk import InfiniProject, InfiniFrozenPackage
-from .models.lock import PackageLock
+from .models.lock import PackageLock, ProjectLock
 from .models.index import Yggdrasil
 
 import toml
@@ -186,3 +186,73 @@ def uninstall(name: str, confirm: bool = False, echo: bool = False) -> None:
 
     lock.remove_package(name, dump=True)
     success(f"规则包[{name}]卸载完成!", echo)
+
+
+def require(name: str, index: str = "", echo: bool = False) -> None:
+    # TODO 输出
+    pkg_lock = PackageLock()
+    lock = ProjectLock()
+    ipk = InfiniProject()
+    splited_name = name.split("==")  # TODO 支持 >= <= > < 标识
+    name = splited_name[0]
+
+    if len(splited_name) > 1:
+        version = splited_name[1]
+    else:
+        version = None
+
+    if not pkg_lock.has_package(name):
+        install(
+            f"name=={version}" if version else name,
+            index=index,
+            upgrade=True,
+            force=True,
+            echo=True,
+        )
+
+    ipk.require(name, version, dump=True)
+    lock.require(name, version, dump=True)
+
+
+def unrequire(name: str):
+    # TODO 输出
+    ipk = InfiniProject()
+    lock = ProjectLock()
+
+    ipk.unrequire(name, dump=True)
+    lock.unrequire(name, dump=True)
+
+
+def add(name: str, index: str = "", echo: bool = False) -> None:
+    # TODO 输出
+    pkg_lock = PackageLock()
+    lock = ProjectLock()
+    ipk = InfiniProject()
+    splited_name = name.split("==")  # TODO 支持 >= <= > < 标识
+    name = splited_name[0]
+
+    if len(splited_name) > 1:
+        version = splited_name[1]
+    else:
+        version = None
+
+    if not pkg_lock.has_package(name):
+        install(
+            f"name=={version}" if version else name,
+            index=index,
+            upgrade=True,
+            force=True,
+            echo=True,
+        )
+
+    ipk.add(name, version, dump=True)
+    lock.add(name, version, dump=True)
+
+
+def remove(name: str):
+    # TODO 输出
+    ipk = InfiniProject()
+    lock = ProjectLock()
+
+    ipk.remove(name, dump=True)
+    lock.remove(name, dump=True)
