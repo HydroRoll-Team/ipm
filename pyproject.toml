@@ -1,5 +1,5 @@
 [project]
-name = "ipm"
+name = "ipdm"
 version = "0.1.0"
 description = "Infini 包管理器"
 authors = [
