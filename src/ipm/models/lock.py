@@ -289,13 +289,14 @@ class ProjectLock(IpmLock):
             "description": pkg.description,
             "license": pkg.license,
         }
+        # TODO 实现本地包
         self.requirements = [
             {"name": name, "version": version or "latest"}
-            for name, version in pkg.requirements.values()
+            for name, version in pkg.requirements.items()
         ]
         self.dependencies = [
             {"name": name, "version": version or "latest"}
-            for name, version in pkg.dependencies.values()
+            for name, version in pkg.dependencies.items()
         ]
         self._init()
         self.dump()
