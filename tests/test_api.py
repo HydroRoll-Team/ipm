@@ -29,7 +29,7 @@ def test_install():
 
 
 def test_uninstall():
-    api.uninstall("test", confirm=True)
+    api.uninstall("test", is_confirm=True)
 
 
 def test_check():
