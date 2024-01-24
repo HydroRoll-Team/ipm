@@ -1,5 +1,6 @@
 from rich.console import Console
-from rich.prompt import Confirm
+from rich.prompt import Confirm, Prompt
+from .typing import List, Any
 
 console = Console()
 status = console.status("")
@@ -45,5 +46,14 @@ def tada(message: str = "工作完成!", echo: bool = True) -> None:
     return console.print("\n[red]:tada:[/red]", str(message), "\n") if echo else None
 
 
-def confirm(messgae: str, default: bool = False) -> bool:
-    return Confirm.ask(str(messgae), default=default)
+def confirm(message: str, default: bool = False) -> bool:
+    return Confirm.ask(str(message), default=default)
+
+
+def ask(
+    message: str,
+    choices: List[str] | None = None,
+    default: Any = None,
+    echo: bool = False,
+) -> Any:
+    return Prompt.ask(message, choices=choices, default=default) if echo else default

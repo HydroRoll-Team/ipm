@@ -2,7 +2,7 @@ from pathlib import Path
 from .typing import StrPath
 from .utils import freeze, urlparser, loader
 from .const import INDEX, INDEX_PATH, STORAGE, SRC_HOME
-from .logging import update, info, success, warning, error, confirm, tada
+from .logging import status, update, info, success, warning, error, confirm, ask
 from .exceptions import (
     FileTypeMismatch,
     TomlLoadFailed,
@@ -20,10 +20,17 @@ import shutil
 
 def check(source_path: StrPath, echo: bool = False) -> bool:
     info("项目环境检查...", echo)
-    ProjectLock(
+
+    update("检查环境...")
+    lock = ProjectLock(
         Path(source_path).resolve() / "infini.lock",
         auto_load=False,
-    ).init()
+    )
+    success("环境检查完毕.", echo)
+
+    update("写入依赖锁文件...", echo)
+    lock.init()
+    success("项目依赖锁写入完成.", echo)
     return True
 
 
@@ -37,15 +44,21 @@ def init(source_path: StrPath, force: bool = False, echo: bool = False) -> bool:
             echo,
         )
     success("环境检查完毕.", echo)
+    status.stop()
 
+    name = ask("项目名称:", default=source_path.name, echo=echo)
+    description = ask("项目简介:", default=f"{source_path.name.upper()} 规则包", echo=echo)
+    license = ask("开源协议:", default="MIT", echo=echo)
+
+    status.start()
     toml_file = toml_path.open("w", encoding="utf-8")
     toml.dump(
         {
             "infini": {
-                "name": source_path.name,
+                "name": name,
                 "version": "0.1.0",
-                "description": f"{source_path.name.upper()} 规则包",
-                "license": "MIT",
+                "description": description,
+                "license": license,
             },
             "requirements": {},
             "dependencies": {},
