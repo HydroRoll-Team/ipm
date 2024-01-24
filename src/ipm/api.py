@@ -36,7 +36,7 @@ def init(source_path: StrPath, force: bool = False, echo: bool = False) -> None:
             "infini": {
                 "name": source_path.name,
                 "version": "0.1.0",
-                "description": "COC 规则包",
+                "description": f"{source_path.name.upper()} 规则包",
                 "license": "MIT",
             },
             "requirements": {},
