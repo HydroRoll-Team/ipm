@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import (
+    Union,
     Literal as Literal,
     List as List,
     Dict as Dict,
@@ -7,7 +8,7 @@ from typing import (
     AnyStr as AnyStr,
 )
 
-StrPath = str | Path
+StrPath = Union[str, Path]
 Index = Dict[Literal["index", "host", "uuid"], str]
 Package = Dict[
     Literal["name", "version", "description", "requirements", "dependencies"], str

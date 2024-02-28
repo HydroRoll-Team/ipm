@@ -31,7 +31,7 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
     update("复制工程文件...", echo)
     shutil.copytree(src_path, build_dir / "src")
     shutil.copy2(ipk.source_path / "infini.toml", build_dir / "infini.toml")
-    success("工程文件复制完毕.")
+    success("工程文件复制完毕.", echo)
 
     update("打包 [bold green]ipk[/bold green]文件...", echo)
     _freeze.create_tar_gz(
