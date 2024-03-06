@@ -1,11 +1,13 @@
 import re
 
 
-def require_update(old_version: str, new_version: str):
+def require_update(old_version: str, new_version: str) -> bool:
     regex = r"^(\d+)\.(\d+)\.(\d+)(.*?)?(\d+?)?$"
 
     old_tuple = re.match(regex, old_version)
     new_tuple = re.match(regex, new_version)
+    if not old_tuple or not new_tuple:
+        return False
 
     old_tuple_main = tuple(map(int, filter(None, old_tuple.group(1, 2, 3))))
     new_tuple_main = tuple(map(int, filter(None, new_tuple.group(1, 2, 3))))
@@ -47,3 +49,4 @@ def require_update(old_version: str, new_version: str):
                 return False
             elif old_pre_version == new_pre_version:
                 return False
+    return False

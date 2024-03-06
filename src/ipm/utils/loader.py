@@ -35,6 +35,8 @@ def load_from_remote(
 
     info("解压中...", echo)
     temp_ipk = extract_ipk(ipk_path, temp_path)
+    if not temp_ipk:
+        raise RuntimeError("解压时出现异常.")
     success(f"包[{temp_ipk.name}]解压完成.")
     move_to = STORAGE / temp_ipk.name
     move_to.mkdir(parents=True, exist_ok=True)
@@ -59,6 +61,8 @@ def load_from_local(source_path: Path) -> InfiniFrozenPackage:
     temp_path = Path(temp_dir.name).resolve()
 
     temp_ipk = extract_ipk(source_path, temp_path)
+    if not temp_ipk:
+        raise RuntimeError("解压时出现异常.")
     move_to = STORAGE / temp_ipk.name
     move_to.mkdir(parents=True, exist_ok=True)
 

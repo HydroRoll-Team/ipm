@@ -1,4 +1,5 @@
 from pathlib import Path
+from typing import Optional
 from ..exceptions import FileNotFoundError, VerifyFailed
 from ..models.ipk import InfiniProject, InfiniFrozenPackage
 from ..typing import StrPath
@@ -12,13 +13,13 @@ import shutil
 
 def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
     update("构建开发环境...", echo)
-    build_dir = ipk.source_path / "build"
-    src_path = ipk.source_path / "src"
-    dist_path = ipk.source_path / "dist"
+    build_dir = ipk._source_path / "build"
+    src_path = ipk._source_path / "src"
+    dist_path = ipk._source_path / "dist"
     ifp_path = dist_path / ipk.default_name
 
-    if not ipk.source_path.exists():
-        raise FileNotFoundError(f"文件或文件夹 [blue]{ipk.source_path.resolve()}[/blue]]不存在!")
+    if not ipk._source_path.exists():
+        raise FileNotFoundError(f"文件或文件夹 [blue]{ipk._source_path.resolve()}[/blue]]不存在!")
     if build_dir.exists():
         update("清理构建环境...")
         shutil.rmtree(build_dir, ignore_errors=True)
@@ -30,7 +31,7 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
 
     update("复制工程文件...", echo)
     shutil.copytree(src_path, build_dir / "src")
-    shutil.copy2(ipk.source_path / "infini.toml", build_dir / "infini.toml")
+    shutil.copy2(ipk._source_path / "infini.toml", build_dir / "infini.toml")
     success("工程文件复制完毕.", echo)
 
     update("打包 [bold green]ipk[/bold green]文件...", echo)
@@ -55,7 +56,7 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
 
 def extract_ipk(
     source_path: StrPath, dist_path: StrPath, echo: bool = False
-) -> InfiniProject:
+) -> Optional[InfiniProject]:
     ifp_path = Path(source_path).resolve()
     dist_path = Path(dist_path).resolve()
     hash_path = ifp_path.parent / (ifp_path.name + ".hash")
@@ -86,7 +87,7 @@ def extract_ipk(
         try:
             shutil.rmtree(dist_pkg_path)
         except Exception as err:
-            return error(err)
+            return error(str(err))
         success("旧规则包项目文件清理完毕.", echo)
 
     update(f"迁移文件至目标目录...", echo)
