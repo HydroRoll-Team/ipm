@@ -5,7 +5,7 @@ from tomlkit.toml_document import TOMLDocument
 from ipm.const import INDEX
 from ipm.models.index import Yggdrasil
 from ipm.typing import List, Dict, Literal, StrPath
-from ipm.exceptions import TomlLoadFailed
+from ipm.exceptions import ProjectError, TomlLoadFailed
 
 import tomlkit
 import abc
@@ -54,9 +54,7 @@ class Requirement:
         return bool(self.path)
 
 
-class Requirements:
-    requirements: List[Requirement]
-
+class Requirements(List[Requirement]):
     def __init__(
         self,
         dependencies: Dict[str, Union[Dict, str]],
@@ -65,7 +63,7 @@ class Requirements:
         path = yggdrasil = version = None
         for name, dependency in dependencies.items():
             if isinstance(dependency, str):
-                self.requirements.append(Requirement(name=name, version=dependency))
+                self.append(Requirement(name=name, version=dependency))
             else:
                 for key, value in dependency.items():
                     if key == "index":
@@ -80,7 +78,7 @@ class Requirements:
                         version = value
                     else:
                         raise ValueError(f"未知的依赖项键值: '{key}'")
-                self.requirements.append(
+                self.append(
                     Requirement(
                         name=name,
                         version=version or "*",
@@ -137,9 +135,31 @@ class InfiniProject(InfiniPackage):
     def dump(self) -> None:
         return tomlkit.dump(self._data, self._toml_path.open("w", encoding="utf-8"))
 
-    def require(self, name: str) -> None:
-        version = "*"
-        self._data["requirements"][name] = version  # type: ignore
+    def require(
+        self,
+        name: str,
+        *,
+        version: Optional[str] = None,
+        path: Optional[str] = None,
+        yggdrasil: Optional[str] = None,
+        index: Optional[str] = None,
+    ) -> None:
+        if version and not any([path, yggdrasil, index]):
+            self._data["requirements"][name] = version  # type: ignore
+            return
+        requirement = tomlkit.inline_table()
+        requirement.add("version", version) if version else None
+        requirement.add("path", path) if path else None
+        requirement.add("yggdrasil", yggdrasil) if yggdrasil else None
+        requirement.add("index", index) if index else None
+        if not requirement:
+            raise ValueError("")
+        self._data["requirements"].update({name: requirement})  # type: ignore
+
+    def unrequire(self, name: str) -> None:
+        if name not in self._data.get("requirements", {}):
+            raise ProjectError(f"规则包 [bold green]{name}[/] 不在规则包依赖中.")
+        self._data["requirements"].remove(name)  # type: ignore
 
     @property
     def plain_dict(self) -> TOMLDocument:
@@ -167,15 +187,15 @@ class InfiniProject(InfiniPackage):
 
     @property
     def dependencies(self) -> Dict[str, Any]:
-        return self._data["dependenciess"]  # type: ignore
+        return self._data["dependencies"]  # type: ignore
 
     @property
     def requirements(self) -> Requirements:
-        return Requirements(self._data["requirement"], yggdrasils=self.yggdrasils)  # type: ignore
+        return Requirements(self._data.get("requirements") or {}, yggdrasils=self.yggdrasils)  # type: ignore
 
     @property
-    def yggdrasils(self) -> Optional[List[Yggdrasil]]:
-        return [Yggdrasil(index) for _, index in self._data.get("yggdrasil", {}).items()] or None  # type: ignore
+    def yggdrasils(self) -> List[Yggdrasil]:
+        return [Yggdrasil(index) for _, index in self._data.get("yggdrasils", {}).items()] or []  # type: ignore
 
 
 class InfiniFrozenPackage(InfiniPackage):

@@ -262,4 +262,29 @@ class ProjectLock(IPMLock):
         metadata.add("description", project.description)
         metadata.add("license", project.license)
 
+        for requirement in project.requirements:
+            packages = tomlkit.aot()
+            if requirement.is_local():
+                packages.append(
+                    tomlkit.item(
+                        {
+                            "name": requirement.name,
+                            "version": requirement.version,
+                            "path": requirement.path,
+                        }
+                    )
+                )
+            else:
+                packages.append(
+                    tomlkit.item(
+                        {
+                            "name": requirement.name,
+                            "version": requirement.version,
+                            "yggdrasil": requirement.yggdrasil.index,
+                        }
+                    )
+                )
+
+        lock._data.add("metadata", metadata)
+
         return lock
