@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional
+from ipm.models.lock import ProjectLock
 from ipm.project.env import new_virtualenv
 from ipm.project.toml_file import add_yggdrasil, init_infini, init_pyproject
 from ipm.typing import StrPath
@@ -24,20 +25,23 @@ import os
 import configparser
 
 
-# def check(source_path: StrPath, echo: bool = False) -> bool:
-#     info("项目环境检查...", echo)
+def check(source_path: StrPath, echo: bool = False) -> bool:
+    info("项目环境检查...", echo)
 
-#     update("检查环境...")
-#     lock = ProjectLock(
-#         Path(source_path).resolve() / "infini.lock",
-#         auto_load=False,
-#     )
-#     success("环境检查完毕.", echo)
+    status.start()
+    status.update("检查环境中...")
+    if not (toml_path := Path(source_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    project = InfiniProject(toml_path.parent)
+    success("环境检查完毕.", echo)
 
-#     update("写入依赖锁文件...", echo)
-#     lock.init()
-#     success("项目依赖锁写入完成.", echo)
-#     return True
+    update("写入依赖锁文件...", echo)
+    lock = ProjectLock.init_from_project(project)
+    lock.dump()
+    success("项目依赖锁写入完成.", echo)
+    return True
 
 
 def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
@@ -148,7 +152,7 @@ def build(source_path: StrPath, echo: bool = False) -> Optional[InfiniFrozenPack
 
 
 def extract(
-    source_path: StrPath, dist_path: StrPath | None = None, echo: bool = False
+    source_path: StrPath, dist_path: Optional[StrPath] = None, echo: bool = False
 ) -> Optional[InfiniProject]:
     info("解压缩规则包...", echo)
     dist_path = (
@@ -157,7 +161,9 @@ def extract(
     return freeze.extract_ipk(source_path, dist_path, echo)
 
 
-def yggdrasil_add(source_path: StrPath, name: str, index: str, echo: bool = False) -> bool:
+def yggdrasil_add(
+    source_path: StrPath, name: str, index: str, echo: bool = False
+) -> bool:
     info(f"新增世界树: [bold green]{name}[/]")
     status.start()
     status.update("检查环境中...")
@@ -175,192 +181,59 @@ def yggdrasil_add(source_path: StrPath, name: str, index: str, echo: bool = Fals
     return True
 
 
-# def install(
-#     uri: str,
-#     index: str = "",
-#     upgrade: bool = False,
-#     force: bool = False,
-#     echo: bool = False,
-# ) -> None:
-#     info(f"安装规则包 [bold green]{uri}[/bold green]...", echo)
+def require(
+    target_path: StrPath,
+    name: str,
+    *,
+    path: Optional[str] = None,
+    yggdrasil: Optional[str] = None,
+    index: Optional[str] = None,
+    echo: bool = False,
+) -> bool:
+    info(f"新增规则包依赖: [bold green]{name}[/bold green]", echo)
+    status.start()
+    status.update("检查环境中...")
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    project = InfiniProject(toml_path.parent)
+    success("环境检查完毕.", echo)
 
-#     update("初始化 [bold green]IPM[/bold green] 环境...", echo)
-#     SRC_HOME.mkdir(parents=True, exist_ok=True)
-#     index = index or INDEX
-#     lock = PackageLock()
+    splited_name = name.split("==")  # TODO 支持 >= <= > < 标识
+    name = splited_name[0]
 
-#     if uri.split("==")[0].isalpha():
-#         # TODO 兼容 >= <= > < 等标识符
-#         splited_uri = uri.split("==")
-#         name = splited_uri[0]
-#         if len(splited_uri) == 1:
-#             version = None
-#         else:
-#             version = splited_uri[1]
+    if len(splited_name) > 1:
+        version = splited_name[1]
+    else:
+        version = "*"
 
-#         yggdrasil = Yggdrasil(index)
-
-#         if not (lock_index := lock.get_index(index)):
-#             yggdrasil.sync()
-#             lock.add_index(index, yggdrasil.host, yggdrasil.uuid, dump=True)
-#         else:
-#             yggdrasil.init(INDEX_PATH / lock_index["uuid"])
-
-#         if not (remote_ifp := yggdrasil.get(name, version=version)):
-#             return warning(
-#                 f"未能在世界树[{yggdrasil.index}]中搜寻到规则包[{uri}].", echo
-#             )
-
-#         ifp = loader.load_from_remote(
-#             name,
-#             baseurl=index,
-#             filename=remote_ifp["source"],
-#             echo=echo,
-#         )
-#     elif urlparser.is_valid_url(uri):
-#         filename = uri.rstrip("/").rpartition("/")[-1]
-#         ifp = loader.load_from_remote(
-#             "temp",
-#             uri.rstrip("/").rpartition("/")[0],
-#             filename,
-#             echo=echo,
-#         )
-#     else:
-#         path = Path(uri).resolve()
-#         update(f"检查文件 [blue]{path}[/blue]...", echo)
-#         if not path.exists():
-#             raise FileNotFoundError("给定的 URI 路径不存在!")
-
-#         if uri.endswith(".ipk"):
-#             ifp = loader.load_from_local(path)
-#         else:
-#             raise FileTypeMismatch("文件类型与预期[.ipk]不匹配.")
-
-#     if lock.has_package(ifp.name):
-#         exists_version = lock.get_package(ifp.name)["version"]
-#         if require_update(exists_version, ifp.version):
-#             if not upgrade:
-#                 raise PackageExsitsError(
-#                     f"已经安装了 [bold green]{ifp.name}[/bold green] [yellow]{exists_version}[/yellow], 使用[[blue]--upgrade[/blue]]参数进行升级."
-#                 )
-#             else:
-#                 info(f"发现已经安装的[{ifp.name}={exists_version}], 卸载中...")
-#                 uninstall(ifp.name, is_confirm=True, echo=echo)
-#                 success(f"[{ifp.name}={exists_version}]卸载完成.")
-#         else:
-#             if not force:
-#                 raise PackageExsitsError(
-#                     f"已经安装了 [bold green]{ifp.name}[/bold green] [yellow]{exists_version}[/yellow], 使用[[red]--force[/red]]参数进行强制覆盖."
-#                 )
-#             else:
-#                 info(
-#                     f"发现已经安装的 [bold green]{ifp.name}[/bold green] [yellow]{exists_version}[/yellow], 卸载中..."
-#                 )
-#                 uninstall(ifp.name, is_confirm=True, echo=echo)
-#                 success(
-#                     f"[bold green]{ifp.name}[/bold green] [yellow]{exists_version}[/yellow]卸载完成..."
-#                 )
-#         lock.load(auto_completion=True)
-
-#     update(
-#         f"安装 [bold green]{ifp.name}[/bold green] [yellow]{ifp.version}[/yellow] 中...",
-#         echo,
-#     )
-#     ipk = extract(
-#         STORAGE / ifp.name / ifp.default_name, SRC_HOME, echo
-#     )  # TODO 安装依赖规则包
-#     success(
-#         f"成功安装 [bold green]{ifp.name}[/bold green] [yellow]{ifp.version}[/yellow].",
-#         echo,
-#     )
-
-#     update("处理全局锁...", echo)
-#     if not lock.has_storage(ifp.name):
-#         lock.add_storage(ifp, dump=True)
-#     lock.add_package(ipk, dump=True)
-#     success("全局锁已处理完毕.", echo)
-
-#     success(f"包[{ipk.name}]成功安装在 [blue]{ipk._source_path}[/blue].", echo)
+    status.update("处理 Infini 项目依赖锁...")
+    project.require(
+        name,
+        version=version,
+        path=path,
+        yggdrasil=yggdrasil,
+        index=index,
+    )
+    project.dump()
+    success("项目文件写入完成.", echo)
+    check(target_path, echo=echo)
+    # sync()
+    success("规则包依赖新增完成.", echo)
+    return True
 
 
-# def uninstall(name: str, is_confirm: bool = False, echo: bool = False) -> bool:
-#     lock = PackageLock()
-#     path = SRC_HOME / name.strip()
-
-#     if not (install_info := lock.get_package(name)):
-#         warning(
-#             f"由于 [bold green]{name}[/bold green]未被安装, 故忽略卸载操作.", echo
-#         )
-#         return False
-
-#     info(
-#         f"发现已经安装的 [bold green]{name}[/bold green] [yellow]{install_info['version']}[/yellow].",
-#         echo,
-#     )
-#     update(
-#         f"卸载 [bold green]{name}[/bold green] [yellow]{install_info['version']}[/yellow]..."
-#     )
-#     warning(f"将会清理: [blue]{path}[/blue]", echo)
-#     is_confirm: bool = (
-#         True if (confirm("你确定要继续?") if not is_confirm else is_confirm) else False
-#     )
-#     if is_confirm:
-#         shutil.rmtree(SRC_HOME / name, ignore_errors=True)
-#     else:
-#         info("忽略.", echo)
-#         return False
-
-#     lock.remove_package(name, dump=True)
-#     success(
-#         f"规则包 [bold green]{name}[/bold green] [yellow]{install_info['version']}[/yellow] 卸载完成!",
-#         echo,
-#     )
-#     return True
-
-
-# def require(name: str, index: str = "", echo: bool = False) -> None:
-#     info(f"新增规则包依赖: [bold green]{name}[/bold green]", echo)
-#     update("检查环境中...", echo)
-#     pkg_lock = PackageLock()
-#     lock = ProjectLock()
-#     ipk = InfiniProject()
-#     success("环境检查完毕.", echo)
-
-#     splited_name = name.split("==")  # TODO 支持 >= <= > < 标识
-#     name = splited_name[0]
-
-#     if len(splited_name) > 1:
-#         version = splited_name[1]
-#     else:
-#         version = None
-
-#     if not pkg_lock.has_package(name):
-#         info(f"检测到需要依赖的规则包[{name}]不存在, 安装中...", echo)
-#         install(
-#             f"name=={version}" if version else name,
-#             index=index,
-#             upgrade=True,
-#             force=True,
-#             echo=True,
-#         )
-
-#     info("处理 Infini 项目依赖锁...", echo)
-#     ipk.require(name, version, dump=True)
-#     lock.require(name, version, dump=True)  # TODO 使用check替代
-#     success("规则包依赖新增完成.", echo)
-#     return True
-
-
-# def unrequire(name: str, echo: bool = False):
-#     info(f"删除规则包依赖: [bold green]{name}[/bold green]", echo)
-#     info("处理 Infini 项目依赖锁...", echo)
-#     ipk = InfiniProject()
-#     lock = ProjectLock()
-
-#     ipk.unrequire(name, dump=True)
-#     lock.unrequire(name, dump=True)
-#     success("规则包依赖删除完成.", echo)
-#     return True
+def unrequire(target_path: StrPath, name: str, echo: bool = False):
+    info(f"删除规则包依赖: [bold green]{name}[/bold green]", echo)
+    update("处理 Infini 项目依赖锁...", echo)
+    project = InfiniProject()
+    project.unrequire(name)
+    project.dump()
+    success("项目文件写入完成.", echo)
+    check(target_path, echo=echo)
+    success("规则包依赖删除完成.", echo)
+    return True
 
 
 # def add(name: str, index: str = "", echo: bool = False) -> None:

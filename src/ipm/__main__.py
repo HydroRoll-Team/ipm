@@ -1,6 +1,6 @@
 from pathlib import Path
 from . import api
-from .exceptions import IpmException
+from .exceptions import IPMException
 from .logging import status, error, tada
 import typer
 
@@ -10,16 +10,16 @@ main = typer.Typer(
 )
 
 
-# @main.command()
-# def check():
-#     """分析 Infini 项目并创建项目锁"""
-#     try:
-#         if api.check(".", echo=True):
-#             tada()
-#     except IpmException as err:
-#         error(str(err), echo=True)
-#     finally:
-#         status.stop()
+@main.command()
+def check():
+    """分析 Infini 项目并创建项目锁"""
+    try:
+        if api.check(".", echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
 
 
 # @main.command()
@@ -48,7 +48,7 @@ def extract(
     try:
         if api.extract(package, dist, echo=True):
             tada()
-    except IpmException as err:
+    except IPMException as err:
         error(str(err), echo=True)
     finally:
         status.stop()
@@ -60,7 +60,7 @@ def init(force: bool = typer.Option(None, "--force", "-f", help="强制初始化
     try:
         if api.init(".", force, echo=True):
             tada()
-    except IpmException as err:
+    except IPMException as err:
         error(str(err), echo=True)
     finally:
         status.stop()
@@ -72,7 +72,7 @@ def new(package: str = typer.Argument(help="Infini 项目路径")):
     try:
         if api.new(package, echo=True):
             tada()
-    except IpmException as err:
+    except IPMException as err:
         error(str(err), echo=True)
     finally:
         status.stop()
@@ -84,14 +84,17 @@ def build(package: str = typer.Argument(".", help="Infini 项目路径")):
     try:
         if api.build(package, echo=True):
             tada()
-    except IpmException as err:
+    except IPMException as err:
         error(str(err), echo=True)
     finally:
         status.stop()
 
 
 yggdrasil = typer.Typer(
-    name="yggdrasil", help="Infini 包世界树管理", no_args_is_help=True, add_completion=False
+    name="yggdrasil",
+    help="Infini 包世界树管理",
+    no_args_is_help=True,
+    add_completion=False,
 )
 
 
@@ -104,7 +107,7 @@ def add(
     try:
         if api.yggdrasil_add(Path.cwd(), name, index, echo=True):
             tada()
-    except IpmException as err:
+    except IPMException as err:
         error(str(err), echo=True)
     finally:
         status.stop()
@@ -136,31 +139,40 @@ def add(
 #         status.stop()
 
 
-# @main.command()
-# def require(
-#     name: str = typer.Argument(help="Infini 包名"),
-#     index: str = typer.Option(None, help="世界树服务器地址"),
-# ):
-#     """新增规则包依赖"""
-#     try:
-#         if api.require(name, index, echo=True):
-#             tada()
-#     except IpmException as err:
-#         error(str(err), echo=True)
-#     finally:
-#         status.stop()
+@main.command()
+def require(
+    name: str = typer.Argument(help="Infini 包名"),
+    path: str = typer.Option(None, help="Infini 包本地路径"),
+    yggdrasil: str = typer.Option(None, help="世界树服务器名称"),
+    index: str = typer.Option(None, help="世界树服务器地址"),
+):
+    """新增规则包依赖"""
+    try:
+        if api.require(
+            Path.cwd(),
+            name,
+            path=path,
+            yggdrasil=yggdrasil,
+            index=index,
+            echo=True,
+        ):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
 
 
-# @main.command()
-# def unrequire(name: str = typer.Argument(help="Infini 包名")):
-#     """删除规则包依赖"""
-#     try:
-#         if api.unrequire(name, echo=True):
-#             tada()
-#     except IpmException as err:
-#         error(str(err), echo=True)
-#     finally:
-#         status.stop()
+@main.command()
+def unrequire(name: str = typer.Argument(help="Infini 包名")):
+    """删除规则包依赖"""
+    try:
+        if api.unrequire(Path.cwd(), name, echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
 
 
 # @main.command()
@@ -188,11 +200,6 @@ def add(
 #         error(str(err), echo=True)
 #     finally:
 #         status.stop()
-
-
-# TODO
-@main.command()
-def collect(): ...
 
 
 # TODO
