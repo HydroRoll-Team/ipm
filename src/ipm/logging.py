@@ -1,3 +1,4 @@
+from typing import Optional
 from rich.console import Console
 from rich.prompt import Confirm, Prompt
 from .typing import List, Any
@@ -52,7 +53,7 @@ def confirm(message: str, default: bool = False) -> bool:
 
 def ask(
     message: str,
-    choices: List[str] | None = None,
+    choices: Optional[List[str]] = None,
     default: Any = None,
     echo: bool = False,
 ) -> Any:
