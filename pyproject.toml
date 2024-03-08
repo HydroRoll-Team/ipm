@@ -12,6 +12,7 @@ dependencies = [
     "rich>=13.7.0",
     "infini>=2.1.1",
     "tomlkit>=0.12.4",
+    "virtualenv>=20.25.1",
 ]
 requires-python = ">=3.8"
 readme = "README.md"
