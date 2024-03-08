@@ -1,11 +1,11 @@
-# from ipm import api
+from ipm import api
 
-# import shutil
+import shutil
 
 
-# def test_new():
-#     api.new("test")
-#     shutil.rmtree("test", ignore_errors=True)
+def test_new():
+    api.new("test")
+    shutil.rmtree("test", ignore_errors=True)
 
 
 # def test_build():
