@@ -70,7 +70,7 @@ def load_from_local(source_path: Path) -> InfiniFrozenPackage:
     shutil.copy2(source_path.parent / (source_path.name + ".hash"), move_to)
 
     ifp = InfiniFrozenPackage(
-        move_to / temp_ipk.default_name, name=temp_ipk.name, version=temp_ipk.version
+        move_to.joinpath(temp_ipk.default_name + ".ipk"), name=temp_ipk.name, version=temp_ipk.version
     )
 
     temp_dir.cleanup()
