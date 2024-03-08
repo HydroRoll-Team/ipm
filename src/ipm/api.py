@@ -1,5 +1,6 @@
 from pathlib import Path
 from typing import Optional
+
 from ipm.models.lock import ProjectLock
 from ipm.project.env import new_virtualenv
 from ipm.project.toml_file import add_yggdrasil, init_infini, init_pyproject
@@ -20,6 +21,7 @@ import shutil
 import os
 import re
 import subprocess
+import tomlkit
 import configparser
 
 
@@ -39,6 +41,38 @@ def check(source_path: StrPath, echo: bool = False) -> bool:
     lock = ProjectLock.init_from_project(project)
     lock.dump()
     success("项目依赖锁写入完成.", echo)
+    return True
+
+
+def tag(target_path: StrPath, tag: str, echo: bool = False):
+    info(f"更新规则包版本号为: [bold green]{tag}[/]", echo)
+    tag = tag.lstrip("v")
+
+    status.start()
+    status.update("检查环境中...")
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    if not (project_path := Path(target_path).joinpath("pyproject.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]pyproject.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    success("环境检查完毕.", echo)
+
+    infini_project = tomlkit.load(toml_path.open("r", encoding="utf-8"))
+    py_project = tomlkit.load(project_path.open("r", encoding="utf-8"))
+    infini_project["project"]["version"] = tag  # type: ignore
+    py_project["project"]["version"] = tag  # type: ignore
+
+    toml_file = toml_path.open("w", encoding="utf-8")
+    project_file = project_path.open("w", encoding="utf-8")
+    tomlkit.dump(infini_project, toml_file)
+    tomlkit.dump(py_project, project_file)
+    toml_file.close()
+    project_file.close()
+
+    success("项目文件写入完成.", echo)
     return True
 
 

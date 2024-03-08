@@ -23,21 +23,16 @@ def check():
         status.stop()
 
 
-# @main.command()
-# def install(
-#     uri: str = typer.Argument(help="Infini 包的统一资源标识符"),
-#     index: str = typer.Option(None, help="世界树服务器地址"),
-#     upgrade: bool = typer.Option(False, "--upgrade", "-u", help="更新 Infini 包"),
-#     force: bool = typer.Option(False, "--force", "-f", help="强制安装"),
-# ):
-#     """安装一个 Infini 规则包到此计算机"""
-#     try:
-#         if api.install(uri, index, upgrade=upgrade, force=force, echo=True):
-#             tada()
-#     except IpmException as err:
-#         error(str(err), echo=True)
-#     finally:
-#         status.stop()
+@main.command()
+def tag(tag: str = typer.Argument(help="版本号标签")):
+    """设置规则包版本号"""
+    try:
+        if api.tag(Path.cwd(), tag, echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
 
 
 @main.command()
