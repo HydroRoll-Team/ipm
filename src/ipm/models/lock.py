@@ -1,51 +1,53 @@
 from pathlib import Path
 from abc import ABCMeta, abstractmethod
-from . import ipk
-from ..typing import Dict, List, StrPath, Any, Package, Index, Storage
-from ..const import IPM_PATH, ATTENSION, SRC_HOME
-from ..exceptions import SyntaxError, FileNotFoundError
-from ..utils.uuid import generate_uuid
+from typing import Optional
+from ipm.typing import Dict, List, StrPath, Any, Package, Index, Storage
+from ipm.const import IPM_PATH, ATTENTIONS, SRC_HOME
+from ipm.exceptions import SyntaxError, FileNotFoundError
+from ipm.utils.uuid import generate_uuid
+from tomlkit import TOMLDocument
+from typing import TYPE_CHECKING
 
 import tomlkit
-import socket
+
+if TYPE_CHECKING:
+    from ipm.models import ipk
 
 
-# class IpmLock(metaclass=ABCMeta):
-#     """IPM 锁基类"""
+class IPMLock(metaclass=ABCMeta):
+    """IPM 锁基类"""
 
-#     source_path: Path
-#     metadata: Dict[str, str]
+    _lock_path: Path
+    metadata: Dict[str, str]
 
-#     def __init__(self, source_path: StrPath, auto_load: bool = True) -> None:
-#         IPM_PATH.mkdir(parents=True, exist_ok=True)
-#         self.source_path = source_path
-#         return self.load() if auto_load else None
+    def __init__(self, source_path: StrPath) -> None:
+        self._lock_path = Path(source_path).resolve().joinpath("infini.lock")
+        self._data = self.read()
 
-#     @abstractmethod
-#     def load(self) -> None:
-#         raise NotImplementedError
+    def read(self) -> TOMLDocument:
+        if not self._lock_path.exists():
+            return tomlkit.document()
+        return tomlkit.load(self._lock_path.open("r", encoding="utf-8"))
 
-#     @abstractmethod
-#     def dumps(self) -> dict:
-#         raise NotImplementedError
+    def dumps(self) -> str:
+        return tomlkit.dumps(self._data)
 
-#     def dump(self) -> str:
-#         data_to_dump = ATTENSION + toml.dumps(self.dumps())
-#         source_file = self.source_path.open("w", encoding="utf-8")
-#         source_file.write(data_to_dump)
-#         source_file.close()
-#         return data_to_dump
+    def dump(self) -> None:
+        doc = tomlkit.document()
+        for attention in ATTENTIONS:
+            doc.add(tomlkit.comment(attention))
+        doc.update(self._data)
+        return tomlkit.dump(
+            doc, self._lock_path.open("w", encoding="utf-8"), sort_keys=True
+        )
 
 
-# class PackageLock(IpmLock):
-#     """全局包锁"""
+class PackageLock(IPMLock):
+    """全局包锁"""
 
-#     indexes: List[Dict[str, Any]]
-#     packages: List[Dict[str, Any]]
-#     storages: List[Dict[str, Any]]
+    def __init__(self, source_path: Optional[StrPath] = None) -> None:
+        super().__init__(source_path=source_path or IPM_PATH)
 
-#     def __init__(self, source_path: StrPath | None = None) -> None:
-#         super().__init__(source_path=source_path or IPM_PATH / "infini.lock")
 
 #     def load(self, auto_completion: bool = True) -> None:
 #         if not self.source_path.exists():
@@ -241,150 +243,23 @@ import socket
 #         return ipk.InfiniProject(Path(SRC_HOME / name.strip()).resolve())
 
 
-# class ProjectLock(IpmLock):
-#     """IPM 项目锁"""
+class ProjectLock(IPMLock):
+    """IPM 项目锁"""
 
-#     requirements: List[Dict[str, Any]]
-#     dependencies: List[Dict[str, Any]]
+    def __init__(self, source_path: Optional[StrPath] = None) -> None:
+        super().__init__(
+            source_path=source_path or Path.cwd(),
+        )
 
-#     def __init__(
-#         self, source_path: StrPath | None = None, auto_load: bool = True
-#     ) -> None:
-#         super().__init__(
-#             source_path=source_path or Path(".").resolve() / "infini.lock",
-#             auto_load=auto_load,
-#         )
+    @staticmethod
+    def init_from_project(project: "ipk.InfiniProject") -> "ProjectLock":
+        lock = ProjectLock(project._source_path)
+        lock._data = tomlkit.document()
 
-#     def _check(self, name: str) -> Dict[str, Any]:  # TODO 依照版本 version: str 区分
-#         requirements = []
-#         for name, sub_requirement in (
-#             PackageLock().get_ipk(name.strip()).requirements.values()
-#         ):
-#             exists = False
-#             for requirement in requirements:
-#                 if requirement["name"] == name:
-#                     exists = True
-#                     break
-#             if not exists:
-#                 sub_requirement["name"] = name
-#                 requirements.append(sub_requirement)
-#         return requirements
+        metadata = tomlkit.table()
+        metadata.add("name", project.name)
+        metadata.add("version", project.version)
+        metadata.add("description", project.description)
+        metadata.add("license", project.license)
 
-#     def _init(self) -> None:
-#         for abs_requirement in self.requirements.copy():
-#             sub_requirements = self._check(abs_requirement["name"])
-#             for sub_requirement in sub_requirements:
-#                 for requirement in self.requirements:
-#                     if requirement["name"] == sub_requirement["name"]:
-#                         exists = True
-#                         break
-#                 if not exists:
-#                     self.requirements.append(sub_requirement)
-
-#     def init(self) -> None:
-#         pkg = ipk.InfiniProject(self.source_path.parent)
-#         self.metadata = {
-#             "name": pkg.name,
-#             "version": pkg.version,
-#             "description": pkg.description,
-#             "license": pkg.license,
-#         }
-#         # TODO 实现本地包
-#         self.requirements = [
-#             {"name": name, "version": version or "latest"}
-#             for name, version in pkg.requirements.items()
-#         ]
-#         self.dependencies = [
-#             {"name": name, "version": version or "latest"}
-#             for name, version in pkg.dependencies.items()
-#         ]
-#         self._init()
-#         self.dump()
-
-#     def load(self) -> None:
-#         pkg = ipk.InfiniProject()
-
-#         if not self.source_path.exists():
-#             self.init()
-#         else:
-#             loaded_data = toml.load(self.source_path.open("r", encoding="utf-8"))
-
-#             self.metadata = (
-#                 loaded_data["metadata"]
-#                 if "metadata" in loaded_data.keys()
-#                 else {
-#                     "name": pkg.name,
-#                     "version": pkg.version,
-#                     "description": pkg.description,
-#                     "license": pkg.license,
-#                 }
-#             )
-#             self.requirements = (
-#                 loaded_data["requirements"]
-#                 if "requirements" in loaded_data.keys()
-#                 else []
-#             )
-#             self.dependencies = (
-#                 loaded_data["dependencies"]
-#                 if "dependencies" in loaded_data.keys()
-#                 else []
-#             )
-
-#     def dumps(self) -> Dict:
-#         return {
-#             "metadata": self.metadata,
-#             "requirements": self.requirements,
-#             "dependencies": self.dependencies,
-#         }
-
-#     def require(self, name: str, version: str, dump: bool = False) -> None:
-#         for requirement in self.requirements:
-#             if "name" not in requirement.keys():
-#                 raise SyntaxError("异常的锁文件!")
-#             if requirement["name"] == name:
-#                 self.requirements.remove(requirement)
-#                 break
-
-#         self.requirements.append(
-#             {
-#                 "name": name,
-#                 "version": version,
-#             }
-#         )
-#         return self.dump() if dump else ""
-
-#     def unrequire(self, name: str, dump: bool = False) -> None:
-#         name = name.strip()
-#         for requirement in self.requirements:
-#             if "name" not in requirement.keys():
-#                 raise SyntaxError("异常的锁文件!")
-#             if requirement["name"] == name:
-#                 self.requirements.remove(requirement)
-#                 break
-#         return self.dump() if dump else ""
-
-#     def add(self, name: str, version: str, dump: bool = False) -> None:
-#         for dependency in self.dependencies:
-#             if "name" not in dependency.keys():
-#                 raise SyntaxError("异常的锁文件!")
-#             if dependency["name"] == name:
-#                 self.dependencies.remove(dependency)
-#                 break
-
-#         self.dependencies.append(
-#             {
-#                 "name": name,
-#                 "version": version,
-#             }
-#         )
-#         return self.dump() if dump else ""
-
-#     def remove(self, name: str, dump: bool = False) -> None:
-#         name = name.strip()
-#         for dependency in self.dependencies:
-#             if "name" not in dependency.keys():
-#                 raise SyntaxError("异常的锁文件!")
-#             if dependency["name"] == name:
-#                 self.dependencies.remove(dependency)
-#                 break
-#         return self.dump() if dump else ""
+        return lock
