@@ -83,8 +83,10 @@ def extract_ipk(
 
     update(f"解压 [blue]{ifp_path}[/blue]...", echo)
     _freeze.extract_tar_gz(str(ifp_path), str(temp_path))
-    temp_pkg = InfiniProject(temp_path)
-    dist_pkg_path = dist_path / temp_pkg.name
+
+    arc_path = next(temp_path.iterdir())
+    temp_pkg = InfiniProject(arc_path)
+    dist_pkg_path = dist_path.joinpath(temp_pkg.default_name)
     success(
         f"[bold green]{temp_pkg.name}[/bold green] [yellow]{temp_pkg.version}[/yellow] 已解压至缓存目录.",
         echo,
@@ -99,10 +101,11 @@ def extract_ipk(
         success("旧规则包项目文件清理完毕.", echo)
 
     update(f"迁移文件至目标目录...", echo)
-    shutil.move(temp_path, dist_pkg_path)
+    shutil.move(arc_path, dist_path)
     success(f"文件已迁移至 [blue]{dist_pkg_path}[/blue].", echo)
 
     update(f"清理临时文件...", echo)
     temp_dir.cleanup()
     success(f"临时文件清理完毕.", echo)
+    print("??")
     return InfiniProject(dist_pkg_path)
