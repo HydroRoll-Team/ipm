@@ -1,8 +1,8 @@
-from .api import install, extract, build, uninstall, init, new
+# from .api import install, extract, build, uninstall, init, new
 
 __author__ = "苏向夜 <fu050409@163.com>"
-__organization__ = (
+__organizations__ = (
     "Noctisynth",
     "HydroRoll-Team",
 )
-__all__ = ["install", "extract", "build", "uninstall", "init", "new"]
+# __all__ = ["install", "extract", "build", "uninstall", "init", "new"]

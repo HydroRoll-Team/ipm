@@ -1,3 +1,4 @@
+from pathlib import Path
 from . import api
 from .exceptions import IpmException
 from .logging import status, error, tada
@@ -89,6 +90,40 @@ def build(package: str = typer.Argument(".", help="Infini 项目路径")):
         status.stop()
 
 
+yggdrasil = typer.Typer(
+    name="yggdrasil", help="Infini 包世界树管理", no_args_is_help=True, add_completion=False
+)
+
+
+@yggdrasil.command()
+def add(
+    name: str = typer.Argument(help="世界树名称"),
+    index: str = typer.Argument(help="世界树地址"),
+):
+    """新增世界树地址"""
+    try:
+        if api.yggdrasil_add(Path.cwd(), name, index, echo=True):
+            tada()
+    except IpmException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
+
+
+# @yggdrasil.command()
+# def remove(
+#     name: str = typer.Argument(help="世界树名称"),
+# ):
+#     """移除世界树地址"""
+#     try:
+#         if api.yggdrasil_remove(Path.cwd(), name, echo=True):
+#             tada()
+#     except IpmException as err:
+#         error(str(err), echo=True)
+#     finally:
+#         status.stop()
+
+
 # @main.command()
 # def uninstall(package: str = typer.Argument(help="Infini 项目路径")):
 #     """卸载 Infini 规则包"""
@@ -164,6 +199,8 @@ def collect(): ...
 @main.command()
 def update(): ...
 
+
+main.add_typer(yggdrasil)
 
 if __name__ == "__main__":
     main()
