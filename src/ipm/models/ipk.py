@@ -161,6 +161,16 @@ class InfiniProject(InfiniPackage):
             raise ProjectError(f"规则包 [bold green]{name}[/] 不在规则包依赖中.")
         self._data["requirements"].remove(name)  # type: ignore
 
+    def add(self, name: str, version: str) -> None:
+        denpendencies = self.dependencies
+        denpendencies.update({name: version})
+        self._data["dependencies"] = denpendencies
+
+    def remove(self, name: str) -> None:
+        if name not in self._data.get("dependencies", {}):
+            raise ProjectError(f"规则包 [bold green]{name}[/] 不在规则包依赖中.")
+        self._data["dependencies"].remove(name)  # type: ignore
+
     @property
     def plain_dict(self) -> TOMLDocument:
         return self._data
@@ -187,7 +197,7 @@ class InfiniProject(InfiniPackage):
 
     @property
     def dependencies(self) -> Dict[str, Any]:
-        return self._data["dependencies"]  # type: ignore
+        return self._data.get("dependencies", {})  # type: ignore
 
     @property
     def requirements(self) -> Requirements:
