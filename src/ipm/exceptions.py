@@ -1,9 +1,13 @@
-class IpmException(Exception):
+class IPMException(Exception):
     """IPM Base Exception"""
 
 
-class FileException(IpmException):
+class FileException(IPMException):
     """IPM File Base Exception"""
+
+
+class ProjectError(FileException):
+    """Exceptions on `infini.toml` project file"""
 
 
 class TomlLoadFailed(FileException):
@@ -22,21 +26,21 @@ class FileExistsError(FileException, FileExistsError):
     """Raises when file not founded"""
 
 
-class SyntaxError(IpmException, SyntaxError):
+class SyntaxError(IPMException, SyntaxError):
     """Syntax Error in config file"""
 
 
-class HashException(IpmException):
+class HashException(IPMException):
     """Exception occured in hashing"""
 
 
-class VerifyFailed(IpmException):
+class VerifyFailed(IPMException):
     """Failed to verify ipk file"""
 
 
-class FileTypeMismatch(IpmException):
+class FileTypeMismatch(IPMException):
     """Ipk file type mismatch"""
 
 
-class PackageExsitsError(IpmException):
+class PackageExsitsError(IPMException):
     """Package already installed"""
