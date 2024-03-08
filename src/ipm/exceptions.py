@@ -44,3 +44,15 @@ class FileTypeMismatch(IPMException):
 
 class PackageExsitsError(IPMException):
     """Package already installed"""
+
+
+class EnvironmentError(IPMException):
+    """Raises when environment is not valid"""
+
+
+class RuntimeError(IPMException, RuntimeError):
+    """An error occured when calling subprocess"""
+
+
+class NameError(IPMException):
+    """Provided name is not valid"""

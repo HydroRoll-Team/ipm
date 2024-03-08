@@ -4,24 +4,22 @@ from ipm.models.lock import ProjectLock
 from ipm.project.env import new_virtualenv
 from ipm.project.toml_file import add_yggdrasil, init_infini, init_pyproject
 from ipm.typing import StrPath
-from ipm.utils import freeze, urlparser, loader
-from ipm.const import GITIGNORE, INDEX, INDEX_PATH, STORAGE, SRC_HOME
-from ipm.logging import status, update, info, success, warning, error, confirm, ask
+from ipm.utils import freeze
+from ipm.logging import status, update, info, success, warning, error, ask
 from ipm.exceptions import (
-    FileTypeMismatch,
+    EnvironmentError,
     TomlLoadFailed,
     FileNotFoundError,
-    PackageExsitsError,
+    NameError,
+    RuntimeError,
 )
-from ipm.utils.version import require_update
 from ipm.models.ipk import InfiniProject, InfiniFrozenPackage
-
-# from ipm.models.lock import PackageLock, ProjectLock
 from ipm.models.index import Yggdrasil
 
-import tomlkit
 import shutil
 import os
+import re
+import subprocess
 import configparser
 
 
@@ -236,36 +234,75 @@ def unrequire(target_path: StrPath, name: str, echo: bool = False):
     return True
 
 
-# def add(name: str, index: str = "", echo: bool = False) -> None:
-#     info("检查环境中...", echo)
-#     pkg_lock = PackageLock()
-#     lock = ProjectLock()
-#     ipk = InfiniProject()
-#     info("环境检查完毕.", echo)
+def add(target_path, name: str, echo: bool = False) -> bool:
+    info(f"新增环境依赖项: [bold green]{name}[/bold green]", echo)
+    status.start()
+    status.update("检查环境中...")
+    if not (
+        match := re.match(r"^((?:[a-zA-Z_-]|\d)+)(?:([>=<]+\d+(?:[.]\d+)*))?$", name)
+    ):
+        raise NameError(f"版本号 [bold red]{name}[/] 不合法.")
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    project = InfiniProject(toml_path.parent)
+    if not shutil.which("pdm"):
+        raise EnvironmentError(
+            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+        )
+    success("环境检查完毕.", echo)
 
-#     splited_name = name.split("==")  # TODO 支持 >= <= > < 标识
-#     name = splited_name[0]
+    status.update("安装依赖中...")
 
-#     if len(splited_name) > 1:
-#         version = splited_name[1]
-#     else:
-#         version = None
+    name = match.group(1)
+    version = match.group(2)
+    project.add(name, version or "*")
+    if (
+        result := subprocess.run(
+            ["pdm", "add", name],
+            cwd=target_path,
+            capture_output=True,
+            text=True,
+        )
+    ).returncode != 0:
+        error(result.stderr.strip("\n"), echo)
+        raise RuntimeError("PDM 异常退出, 指令忽略.")
 
-#     if not pkg_lock.has_package(name):
-#         # TODO pip 环境安装
-#         ...
-
-#     info("处理 Infini 项目依赖锁...", echo)
-#     ipk.add(name, version, dump=True)
-#     lock.add(name, version, dump=True)
-#     success("环境依赖新增完成.", echo)
+    project.dump()
+    success("项目文件写入完成.", echo)
+    return True
 
 
-# def remove(name: str, echo: bool = False):
-#     info("处理 Infini 项目依赖锁...", echo)
-#     ipk = InfiniProject()
-#     lock = ProjectLock()
+def remove(target_path: StrPath, name: str, echo: bool = False):
+    info(f"删除环境依赖项: [bold green]{name}[/bold green]", echo)
+    status.start()
+    status.update("检查环境中...")
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    project = InfiniProject(toml_path.parent)
+    if not shutil.which("pdm"):
+        raise EnvironmentError(
+            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+        )
+    success("环境检查完毕.", echo)
+    project.remove(name)
 
-#     ipk.remove(name, dump=True)
-#     lock.remove(name, dump=True)
-#     success("环境依赖删除完成.", echo)
+    if (
+        result := subprocess.run(
+            ["pdm", "remove", name],
+            cwd=target_path,
+            capture_output=True,
+            text=True,
+        )
+    ).returncode != 0:
+        error(result.stderr.strip("\n"), echo)
+        raise RuntimeError("PDM 异常退出, 指令忽略.")
+
+    project.dump()
+    success("项目文件写入完成.", echo)
+    return True

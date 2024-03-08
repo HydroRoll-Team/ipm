@@ -1,7 +1,8 @@
 from pathlib import Path
-from . import api
-from .exceptions import IPMException
-from .logging import status, error, tada
+from ipm import api
+from ipm.exceptions import IPMException
+from ipm.logging import status, error, tada
+
 import typer
 
 status.start()
@@ -98,8 +99,8 @@ yggdrasil = typer.Typer(
 )
 
 
-@yggdrasil.command()
-def add(
+@yggdrasil.command("add")
+def yggdrasil_add(
     name: str = typer.Argument(help="世界树名称"),
     index: str = typer.Argument(help="世界树地址"),
 ):
@@ -120,18 +121,6 @@ def add(
 #     """移除世界树地址"""
 #     try:
 #         if api.yggdrasil_remove(Path.cwd(), name, echo=True):
-#             tada()
-#     except IpmException as err:
-#         error(str(err), echo=True)
-#     finally:
-#         status.stop()
-
-
-# @main.command()
-# def uninstall(package: str = typer.Argument(help="Infini 项目路径")):
-#     """卸载 Infini 规则包"""
-#     try:
-#         if api.uninstall(package, echo=True):
 #             tada()
 #     except IpmException as err:
 #         error(str(err), echo=True)
@@ -175,36 +164,34 @@ def unrequire(name: str = typer.Argument(help="Infini 包名")):
         status.stop()
 
 
-# @main.command()
-# def add(
-#     name: str = typer.Argument(help="Infini 包名"),
-#     index: str = typer.Option(None, help="世界树服务器地址"),
-# ):
-#     """新增环境依赖"""
-#     try:
-#         if api.add(name, index=index, echo=True):
-#             tada()
-#     except IpmException as err:
-#         error(str(err), echo=True)
-#     finally:
-#         status.stop()
-
-
-# @main.command()
-# def remove(name: str = typer.Argument(help="Infini 包名")):
-#     """删除环境依赖"""
-#     try:
-#         if api.remove(name, echo=True):
-#             tada()
-#     except IpmException as err:
-#         error(str(err), echo=True)
-#     finally:
-#         status.stop()
-
-
-# TODO
 @main.command()
-def update(): ...
+def add(name: str = typer.Argument(help="Infini 包名")):
+    """新增环境依赖"""
+    try:
+        if api.add(Path.cwd(), name, echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
+
+
+@main.command()
+def remove(name: str = typer.Argument(help="Infini 包名")):
+    """删除环境依赖"""
+    try:
+        if api.remove(Path.cwd(), name, echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
+
+
+@main.command()
+def update():
+    """更新 Infini 依赖"""
+    raise NotImplementedError
 
 
 main.add_typer(yggdrasil)
