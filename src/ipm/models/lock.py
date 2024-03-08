@@ -286,5 +286,6 @@ class ProjectLock(IPMLock):
                 )
 
         lock._data.add("metadata", metadata)
+        lock._data.add("packages", packages)
 
         return lock
