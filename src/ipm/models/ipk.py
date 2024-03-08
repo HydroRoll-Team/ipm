@@ -91,7 +91,7 @@ class Requirements(List[Requirement]):
 class InfiniPackage(metaclass=abc.ABCMeta):
     @property
     def default_name(self) -> str:
-        return f"{self.name}-{self.version}.ipk"
+        return f"{self.name}-{self.version}"
 
     @property
     def hash_name(self) -> str:
