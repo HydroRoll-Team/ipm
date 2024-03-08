@@ -21,7 +21,9 @@ __pycache__/
 *.pyc
 
 # Builds
-
-build/
+.ipm-build/
 dist/
+
+# PDM
+.pdm-python
 """
