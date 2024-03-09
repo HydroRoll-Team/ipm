@@ -126,7 +126,7 @@ def init_pyproject(
     license_table = tomlkit.inline_table()
     license_table.update({"text": license})
     project.add("license", license_table)
-    project.add("dependencies", tomlkit.array('[infini]'))
+    project.add("dependencies", tomlkit.array('["infini"]'))
     project.add("requires-python", ">=3.8")
     project.add("readme", "README.md")
 
