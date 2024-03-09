@@ -126,7 +126,7 @@ def init_pyproject(
     license_table = tomlkit.inline_table()
     license_table.update({"text": license})
     project.add("license", license_table)
-    project.add("dependencies", tomlkit.array())
+    project.add("dependencies", tomlkit.array('[infini]'))
     project.add("requires-python", ">=3.8")
     project.add("readme", "README.md")
 
@@ -134,7 +134,7 @@ def init_pyproject(
     pdm = tomlkit.table(True)
     pdm.add("distribution", True)
     dev_dependencies = tomlkit.table()
-    dev_dependencies.add("dev", tomlkit.array('["pytest>=8.0.2"]'))
+    dev_dependencies.add("dev", tomlkit.array('["pytest"]'))
     pdm.append("dev-dependencies", dev_dependencies)
     tool.append("pdm", pdm)
 
