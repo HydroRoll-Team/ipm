@@ -86,14 +86,7 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
             echo,
         )
         return False
-    email = username = None
-    gitconfig_path = Path.home().joinpath(".gitconfig")
-    if gitconfig_path.exists():
-        config = configparser.ConfigParser()
-        config.read(str(gitconfig_path), encoding="utf-8")
-        if "user" in config.sections():
-            email = config["user"].get("email")
-            username = config["user"].get("name")
+    email = username = ''
     email = email or (os.getlogin() + "@example.com")
     username = username or os.getlogin()
     success("环境检查完毕.", echo)
@@ -111,7 +104,8 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
     default_entries = ["__init__.py", f"{name}.py"]
     info("请选择你要使用的入口文件:", echo)
     for index, default_entry in enumerate(default_entries):
-        info(f"[bold cyan]{index}[/bold cyan]. [green]{default_entry}[/green]", echo)
+        info(
+            f"[bold cyan]{index}[/bold cyan]. [green]{default_entry}[/green]", echo)
     entry_file = ask(
         "入口文件:",
         choices=[str(num) for num in range(len(default_entries))],
@@ -188,7 +182,8 @@ def extract(
 ) -> Optional[InfiniProject]:
     info("解压缩规则包...", echo)
     dist_path = (
-        Path(dist_path).resolve() if dist_path else Path(source_path).resolve().parent
+        Path(dist_path).resolve() if dist_path else Path(
+            source_path).resolve().parent
     )
     return freeze.extract_ipk(source_path, dist_path, echo)
 
