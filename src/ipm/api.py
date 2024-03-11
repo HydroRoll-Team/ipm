@@ -141,7 +141,7 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
         webpage='',
         unzip=1
     )
-    new_virtualenv(target_path)
+    # new_virtualenv(target_path)
     return True
 
 
