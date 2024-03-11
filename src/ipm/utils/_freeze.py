@@ -1,5 +1,6 @@
 from curses import meta
 from importlib import metadata
+from logging import warn
 from pathlib import Path
 from struct import pack
 import tarfile
@@ -24,21 +25,14 @@ def extract_tar_gz(input_filename: str, output_folder: str) -> None:
 
 
 def create_xml_file(meta_data: InfiniProject, output_folder: str | Path) -> None:
-    package = {}
-    package['_id'] = meta_data.name
-    package['version'] = meta_data.version
-    package['description'] = meta_data.description
-    authors = meta_data.authors
-    if authors is not None:
-        package['author'] = authors.first
-    package['_license'] = meta_data.license
-    package['webpage'] = meta_data.webpage
-    package['unzip'] = meta_data.unzip
+    from collections import defaultdict
+    meta_data_dict = defaultdict(
+        lambda: '', meta_data._data.get('project'))  # type: ignore
 
-    with open(path.join(output_folder, package["_id"], ".xml"), mode='w', encoding='utf8') as xml_file:
-        xml_file.write(f"""<package id="{_id}"
-        name="{_id}: {description}"
+    with open(path.join(output_folder, f"{meta_data.name}.xml"), mode='w', encoding='utf8') as xml_file:
+        xml_file.write("""<package id="{name}"
+        name="{name}: {description}"
         webpage="{webpage}"
-        author="{author}"
-        license="{_license}"
-        unzip="{unzip}"/>""".format(**package))
+        author="{authors[0][name]}"
+        license="{license}"
+        unzip="{unzip}"/>""".format(**meta_data_dict))
