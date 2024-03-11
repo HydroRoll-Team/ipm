@@ -192,6 +192,14 @@ class InfiniProject(InfiniPackage):
         return Authors(self._data["project"]["authors"])  # type: ignore
 
     @property
+    def webpage(self) -> str:
+        return self._data["project"]["webpage"]  # type: ignore
+
+    @property
+    def unzip(self) -> str | int:
+        return self._data["project"]["unzip"]  # type: ignore
+
+    @property
     def license(self) -> str:
         return self._data["project"]["license"]  # type: ignore
 
@@ -201,11 +209,13 @@ class InfiniProject(InfiniPackage):
 
     @property
     def requirements(self) -> Requirements:
-        return Requirements(self._data.get("requirements") or {}, yggdrasils=self.yggdrasils)  # type: ignore
+        # type: ignore
+        return Requirements(self._data.get("requirements") or {}, yggdrasils=self.yggdrasils)
 
     @property
     def yggdrasils(self) -> List[Yggdrasil]:
-        return [Yggdrasil(index) for _, index in self._data.get("yggdrasils", {}).items()] or []  # type: ignore
+        # type: ignore
+        return [Yggdrasil(index) for _, index in self._data.get("yggdrasils", {}).items()] or []
 
 
 class InfiniFrozenPackage(InfiniPackage):

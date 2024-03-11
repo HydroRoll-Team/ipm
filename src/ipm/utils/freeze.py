@@ -52,6 +52,10 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
     update("创建 SHA256 验证文件...", echo)
     hash_bytes = ifp_hash(ifp_path)
     info(f"文件 SHA256 值为 [purple]{hash_bytes.hex()}[/purple].", echo)
+    
+    update("正在生成 id.xml 文件...", echo)
+    _freeze.create_xml_file(project, dist_path)
+    success("xml 索引文件生成完毕.", echo)
 
     (dist_path / ipk.hash_name).write_bytes(hash_bytes)
     success(

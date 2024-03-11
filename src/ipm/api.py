@@ -117,25 +117,29 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
     status.start()
 
     init_infini(
-        toml_path,
-        target_path,
-        name,
-        version,
-        description,
-        author_name,
-        author_email,
-        license,
-        entry_file,
-        default_entries,
+        toml_path=toml_path,
+        target_path=target_path,
+        name=name,
+        version=version,
+        description=description,
+        author_name=author_name,
+        author_email=author_email,
+        webpage='',
+        unzip=1,
+        license=license,
+        entry_file=entry_file,
+        default_entries=default_entries,
     )
     init_pyproject(
-        target_path,
-        name,
-        version,
-        description,
-        author_name,
-        author_email,
-        license,
+        target_path=target_path,
+        name=name,
+        version=version,
+        description=description,
+        author_name=author_name,
+        author_email=author_email,
+        license=license,
+        webpage='',
+        unzip=1
     )
     new_virtualenv(target_path)
     return True
