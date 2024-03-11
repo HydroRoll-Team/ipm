@@ -1,0 +1,19 @@
+[project]
+name = "examples"
+version = "0.1.0"
+description = "EXAMPLES 规则包"
+authors = [
+    {name = "admin",email = "admin@example.com"},
+]
+license = {text = "MIT"}
+webpage = ""
+unzip = 1
+dependencies = ["infini"]
+requires-python = ">=3.8"
+readme = "README.md"
+
+[tool.pdm]
+distribution = true
+
+[tool.pdm.dev-dependencies]
+dev = ["pytest"]
