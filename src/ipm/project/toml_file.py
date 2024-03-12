@@ -17,8 +17,6 @@ def init_infini(
     author_name: str,
     author_email: str,
     license: str,
-    webpage: str,
-    unzip: str|int,
     entry_file: str,
     default_entries: List[str],
 ) -> None:
@@ -33,8 +31,6 @@ def init_infini(
     author.multiline(True)
     project.add("authors", author)
     project.add("license", license)
-    project.add("webpage", webpage)
-    project.add("unzip", unzip)
     toml_data.add("project", project)
     toml_data.add("requirements", tomlkit.table())
     toml_data.add("dependencies", tomlkit.table())
@@ -115,9 +111,8 @@ def init_pyproject(
     description: str,
     author_name: str,
     author_email: str,
-    webpage: str,
-    unzip: int|str,
     license: str,
+    standalone: bool,
 ):
     toml_file = target_path.joinpath("pyproject.toml").open("w", encoding="utf-8")
     toml_data = tomlkit.document()
@@ -132,15 +127,14 @@ def init_pyproject(
     license_table = tomlkit.inline_table()
     license_table.update({"text": license})
     project.add("license", license_table)
-    project.add("webpage", webpage)
-    project.add("unzip", unzip)
-    project.add("dependencies", tomlkit.array('["infini"]'))
+    project.add("dependencies", tomlkit.array('["infini>2.1.0"]'))
     project.add("requires-python", ">=3.8")
     project.add("readme", "README.md")
 
     tool = tomlkit.table(True)
     pdm = tomlkit.table(True)
-    pdm.add("distribution", True)
+    if standalone:
+        pdm.add("distribution", True)
     dev_dependencies = tomlkit.table()
     dev_dependencies.add("dev", tomlkit.array('["pytest"]'))
     pdm.append("dev-dependencies", dev_dependencies)
