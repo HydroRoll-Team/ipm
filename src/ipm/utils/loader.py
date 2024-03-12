@@ -1,8 +1,8 @@
 from pathlib import Path
-from .freeze import extract_ipk
-from ..const import STORAGE
-from ..logging import info, success
-from ..models.ipk import InfiniFrozenPackage
+from ipm.utils.freeze import extract_ipk
+from ipm.const import STORAGE
+from ipm.logging import info, success
+from ipm.models.ipk import InfiniFrozenPackage
 
 import requests
 import tempfile

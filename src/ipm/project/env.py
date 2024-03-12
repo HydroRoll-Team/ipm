@@ -1,7 +1,8 @@
-import os
 from pathlib import Path
 from virtualenv.run.session import Session
+
 import virtualenv
+import os
 
 
 def new_virtualenv(target_path: Path) -> Session:

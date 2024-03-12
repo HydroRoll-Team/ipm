@@ -1,11 +1,10 @@
 from ipm.const import GITIGNORE
+from ipm.exceptions import ProjectError
+from ipm.models.ipk import InfiniProject
 from pathlib import Path
 from typing import List
-from tomlkit.items import Table
 
 import tomlkit
-
-from ipm.models.ipk import InfiniProject
 
 
 def init_infini(
@@ -101,6 +100,16 @@ def add_yggdrasil(toml_path: Path, name: str, index: str):
     else:
         yggdrasils = project._data["yggdrasils"]
         yggdrasils[name] = index  # type: ignore
+    project.dump()
+
+
+def remove_yggdrasil(project: InfiniProject, name: str):
+    if "yggdrasils" not in project._data:
+        raise ProjectError("项目文件缺乏 [bold red]yggdrasils[/] 项.")
+    else:
+        yggdrasils = project._data["yggdrasils"]
+        if name not in yggdrasils.keys():  # type: ignore
+            raise ProjectError(f"世界树 [bold red]{name}[/] 未注册, 忽略操作.")
     project.dump()
 
 
