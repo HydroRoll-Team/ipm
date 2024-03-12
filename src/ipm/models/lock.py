@@ -261,6 +261,7 @@ class ProjectLock(IPMLock):
         metadata.add("version", project.version)
         metadata.add("description", project.description)
         metadata.add("license", project.license)
+        lock._data.add("metadata", metadata)
 
         for requirement in project.requirements:
             packages = tomlkit.aot()
@@ -284,8 +285,6 @@ class ProjectLock(IPMLock):
                         }
                     )
                 )
-
-        lock._data.add("metadata", metadata)
-        lock._data.add("packages", packages)
+            lock._data.add("packages", packages)
 
         return lock
