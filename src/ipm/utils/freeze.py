@@ -111,5 +111,4 @@ def extract_ipk(
     update(f"清理临时文件...", echo)
     temp_dir.cleanup()
     success(f"临时文件清理完毕.", echo)
-    print("??")
     return InfiniProject(dist_pkg_path)
