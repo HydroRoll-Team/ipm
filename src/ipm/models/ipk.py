@@ -196,7 +196,7 @@ class InfiniProject(InfiniPackage):
         return self._data["project"]["webpage"]  # type: ignore
 
     @property
-    def unzip(self) -> str | int:
+    def unzip(self) -> Union[str, int]:
         return self._data["project"]["unzip"]  # type: ignore
 
     @property
