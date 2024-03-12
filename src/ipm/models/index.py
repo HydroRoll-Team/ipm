@@ -67,3 +67,8 @@ class Yggdrasil:
     def get_hash(self, name: str, version: str) -> str:
         """从本地获取规则包哈希值"""
         raise NotImplementedError
+
+    @property
+    def uuid(self) -> str:
+        """世界树唯一标识"""
+        raise NotImplementedError
