@@ -3,10 +3,15 @@ from typing import Optional
 
 from ipm.models.lock import ProjectLock
 from ipm.project.env import new_virtualenv
-from ipm.project.toml_file import add_yggdrasil, init_infini, init_pyproject
+from ipm.project.toml_file import (
+    add_yggdrasil,
+    init_infini,
+    init_pyproject,
+    remove_yggdrasil,
+)
 from ipm.typing import StrPath
 from ipm.utils import freeze
-from ipm.utils.git import get_user_name_email, git_init
+from ipm.utils.git import get_user_name_email, git_init, git_tag
 from ipm.logging import confirm, status, update, info, success, warning, error, ask
 from ipm.exceptions import (
     EnvironmentError,
@@ -24,11 +29,11 @@ import subprocess
 import tomlkit
 
 
-def check(source_path: StrPath, echo: bool = False) -> bool:
+def lock(target_path: StrPath, echo: bool = False) -> bool:
     info("项目环境检查...", echo)
 
     update("检查环境中...")
-    if not (toml_path := Path(source_path).joinpath("infini.toml")).exists():
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
         )
@@ -39,6 +44,12 @@ def check(source_path: StrPath, echo: bool = False) -> bool:
     lock = ProjectLock.init_from_project(project)
     lock.dump()
     success("项目依赖锁写入完成.", echo)
+    return True
+
+
+def check(target_path: StrPath, echo: bool = False) -> bool:
+    if not lock(target_path, echo=echo):
+        return False
 
     update("处理环境配置中...", echo)
     warning("同步指令暂未被实装, 忽略.", echo)
@@ -49,8 +60,7 @@ def tag(target_path: StrPath, tag: str, echo: bool = False):
     info(f"更新规则包版本号为: [bold green]{tag}[/]", echo)
     tag = tag.lstrip("v")
 
-    status.start()
-    status.update("检查环境中...")
+    update("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -74,6 +84,12 @@ def tag(target_path: StrPath, tag: str, echo: bool = False):
     project_file.close()
 
     success("项目文件写入完成.", echo)
+
+    if toml_path.parent.joinpath(".git").is_dir():
+        update("处理 Git 标签中...", echo)
+        git_tag(toml_path.parent, tag)
+        success(f"标签 [bold green]{tag}[/] 已写入.", echo)
+
     return True
 
 
@@ -115,8 +131,7 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
     init_git = confirm("初始化 Git 仓库", default=True)
     init_virtualenv = confirm(f"为 [bold green]{name}[/] 虚拟环境", default=True)
 
-    status.update("构建环境中...")
-    status.start()
+    update("构建环境中...", echo)
 
     init_infini(
         toml_path=toml_path,
@@ -156,7 +171,6 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
         raise RuntimeError("PDM 异常退出, 指令忽略.")
 
     if init_git:
-        update("初始化 Git 仓库...", echo)
         git_init(target_path)
 
     return True
@@ -175,7 +189,8 @@ def new(dist_path: StrPath, echo: bool = False) -> bool:
     path.mkdir(parents=True, exist_ok=True)
     success("环境检查完毕.", echo)
 
-    init(path, echo=echo)
+    if not init(path, echo=echo):
+        return False
 
     success(f"规则包 [bold green]{path.name}[/bold green] 新建完成!", echo)
     return True
@@ -209,21 +224,35 @@ def extract(
 
 
 def yggdrasil_add(
-    source_path: StrPath, name: str, index: str, echo: bool = False
+    target_path: StrPath, name: str, index: str, echo: bool = False
 ) -> bool:
-    info(f"新增世界树: [bold green]{name}[/]")
-    status.start()
-    status.update("检查环境中...")
-    if not (toml_path := Path(source_path).joinpath("infini.toml")).exists():
+    info(f"新增世界树: [bold green]{name}[/]", echo)
+    update("检查环境中...", echo)
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
         )
     success("环境检查完毕.", echo)
-    status.update("同步世界树中...")
+    update("同步世界树中...", echo)
     yggdrasil = Yggdrasil(index)
-    yggdrasil.sync()
+    # yggdrasil.sync()
+    warning("世界树同步模块未实装, 忽略.", echo)
 
     add_yggdrasil(toml_path, name, index)
+    success("更改均已写入文件.", echo)
+    return True
+
+
+def yggdrasil_remove(target_path: StrPath, name: str, echo: bool = False) -> bool:
+    info(f"新增世界树: [bold green]{name}[/]", echo)
+    update("检查环境中...", echo)
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    project = InfiniProject(toml_path.parent)
+    success("环境检查完毕.", echo)
+    remove_yggdrasil(project, name)
     success("更改均已写入文件.", echo)
     return True
 
@@ -357,4 +386,6 @@ def remove(target_path: StrPath, name: str, echo: bool = False):
     return True
 
 
-def sync(target_path: StrPath, echo: bool = False): ...
+def sync(target_path: StrPath, echo: bool = False) -> bool:
+    ...
+    return True

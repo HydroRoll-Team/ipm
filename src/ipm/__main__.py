@@ -12,8 +12,20 @@ main = typer.Typer(
 
 
 @main.command()
+def lock():
+    """从项目文件构建锁文件"""
+    try:
+        if api.lock(".", echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
+
+
+@main.command()
 def check():
-    """分析 Infini 项目并创建项目锁"""
+    """检查 Infini 项目并创建项目锁"""
     try:
         if api.check(".", echo=True):
             tada()
@@ -109,18 +121,18 @@ def yggdrasil_add(
         status.stop()
 
 
-# @yggdrasil.command()
-# def remove(
-#     name: str = typer.Argument(help="世界树名称"),
-# ):
-#     """移除世界树地址"""
-#     try:
-#         if api.yggdrasil_remove(Path.cwd(), name, echo=True):
-#             tada()
-#     except IpmException as err:
-#         error(str(err), echo=True)
-#     finally:
-#         status.stop()
+@yggdrasil.command("remove")
+def yggdrasil_remove(
+    name: str = typer.Argument(help="世界树名称"),
+):
+    """移除世界树地址"""
+    try:
+        if api.yggdrasil_remove(Path.cwd(), name, echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
 
 
 @main.command()
