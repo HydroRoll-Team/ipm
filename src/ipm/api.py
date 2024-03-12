@@ -6,7 +6,8 @@ from ipm.project.env import new_virtualenv
 from ipm.project.toml_file import add_yggdrasil, init_infini, init_pyproject
 from ipm.typing import StrPath
 from ipm.utils import freeze
-from ipm.logging import status, update, info, success, warning, error, ask
+from ipm.utils.git import get_user_name_email, git_init
+from ipm.logging import confirm, status, update, info, success, warning, error, ask
 from ipm.exceptions import (
     EnvironmentError,
     TomlLoadFailed,
@@ -18,18 +19,15 @@ from ipm.models.ipk import InfiniProject, InfiniFrozenPackage
 from ipm.models.index import Yggdrasil
 
 import shutil
-import os
 import re
 import subprocess
 import tomlkit
-import configparser
 
 
 def check(source_path: StrPath, echo: bool = False) -> bool:
     info("项目环境检查...", echo)
 
-    status.start()
-    status.update("检查环境中...")
+    update("检查环境中...")
     if not (toml_path := Path(source_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -41,6 +39,9 @@ def check(source_path: StrPath, echo: bool = False) -> bool:
     lock = ProjectLock.init_from_project(project)
     lock.dump()
     success("项目依赖锁写入完成.", echo)
+
+    update("处理环境配置中...", echo)
+    warning("同步指令暂未被实装, 忽略.", echo)
     return True
 
 
@@ -86,9 +87,7 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
             echo,
         )
         return False
-    email = username = ''
-    email = email or (os.getlogin() + "@example.com")
-    username = username or os.getlogin()
+    username, email = get_user_name_email()
     success("环境检查完毕.", echo)
     status.stop()
 
@@ -104,14 +103,17 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
     default_entries = ["__init__.py", f"{name}.py"]
     info("请选择你要使用的入口文件:", echo)
     for index, default_entry in enumerate(default_entries):
-        info(
-            f"[bold cyan]{index}[/bold cyan]. [green]{default_entry}[/green]", echo)
+        info(f"[bold cyan]{index}[/bold cyan]. [green]{default_entry}[/green]", echo)
     entry_file = ask(
         "入口文件:",
         choices=[str(num) for num in range(len(default_entries))],
         default="0",
         echo=echo,
     )
+
+    standalone = confirm("是否为项目分发", default=True)
+    init_git = confirm("初始化 Git 仓库", default=True)
+    init_virtualenv = confirm(f"为 [bold green]{name}[/] 虚拟环境", default=True)
 
     status.update("构建环境中...")
     status.start()
@@ -124,8 +126,6 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
         description=description,
         author_name=author_name,
         author_email=author_email,
-        webpage='',
-        unzip=1,
         license=license,
         entry_file=entry_file,
         default_entries=default_entries,
@@ -138,10 +138,27 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
         author_name=author_name,
         author_email=author_email,
         license=license,
-        webpage='',
-        unzip=1
+        standalone=standalone,
     )
-    # new_virtualenv(target_path)
+
+    if init_virtualenv:
+        new_virtualenv(target_path)
+
+    if (
+        result := subprocess.run(
+            ["pdm", "install"],
+            cwd=target_path,
+            capture_output=True,
+            text=True,
+        )
+    ).returncode != 0:
+        error(result.stderr.strip("\n"), echo)
+        raise RuntimeError("PDM 异常退出, 指令忽略.")
+
+    if init_git:
+        update("初始化 Git 仓库...", echo)
+        git_init(target_path)
+
     return True
 
 
@@ -186,8 +203,7 @@ def extract(
 ) -> Optional[InfiniProject]:
     info("解压缩规则包...", echo)
     dist_path = (
-        Path(dist_path).resolve() if dist_path else Path(
-            source_path).resolve().parent
+        Path(dist_path).resolve() if dist_path else Path(source_path).resolve().parent
     )
     return freeze.extract_ipk(source_path, dist_path, echo)
 
@@ -339,3 +355,6 @@ def remove(target_path: StrPath, name: str, echo: bool = False):
     project.dump()
     success("项目文件写入完成.", echo)
     return True
+
+
+def sync(target_path: StrPath, echo: bool = False): ...
