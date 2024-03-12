@@ -1,5 +1,6 @@
 from pathlib import Path
-from git import Repo
+from ipm.exceptions import RuntimeError
+from git import GitCommandError, Repo
 
 import os
 
@@ -18,3 +19,11 @@ def get_user_name_email():
 
 def git_init(target_path: Path):
     return Repo.init(target_path)
+
+
+def git_tag(target_path: Path, tag: str):
+    repo = Repo(target_path)
+    try:
+        repo.create_tag("v" + tag)
+    except GitCommandError as err:
+        raise RuntimeError(f"创建 Tag 时出现异常: [red]{err.stderr.strip("\n ")}[/]")
