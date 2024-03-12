@@ -235,7 +235,7 @@ def yggdrasil_add(
     success("环境检查完毕.", echo)
     update("同步世界树中...", echo)
     yggdrasil = Yggdrasil(index)
-    # yggdrasil.sync()
+    yggdrasil.sync()
     warning("世界树同步模块未实装, 忽略.", echo)
 
     add_yggdrasil(toml_path, name, index)
