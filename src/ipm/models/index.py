@@ -10,14 +10,14 @@ import shutil
 
 
 class Yggdrasil:
-    """此对象内所有方法均为示例方法，可以按照需求和开发奇怪进行微调"""
+    """此对象内所有方法均为示例方法，可以按照需求和开发习惯进行微调"""
 
     def __init__(self, index: str) -> None:
         self.index = index.rstrip("/") + "/"
         self._data = self.read()
 
     def read(self) -> tomlkit.TOMLDocument:
-        """示例方法，读取一个本地的世界树索引文件"""
+        """示例方法，读取一个本地的世界树索引文件，这里使用toml只是作为样例"""
         if not self._source_path.exists():
             self._source_path.parent.mkdir(parents=True, exist_ok=True)
             return tomlkit.document()
@@ -40,7 +40,7 @@ class Yggdrasil:
 
         temp_dir = tempfile.TemporaryDirectory()
         temp_path = Path(temp_dir.name).resolve()
-        temp_lock_path = temp_path / "infini.lock"  # 索引文件地址，这里的lock仅作示例
+        temp_lock_path = temp_path / "infini.lock"  # 本地索引文件地址，这里的lock仅作示例
 
         temp_lock_file = temp_lock_path.open("wb")
         temp_lock_file.write(lock_bytes)
