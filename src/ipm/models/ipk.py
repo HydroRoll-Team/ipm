@@ -209,13 +209,16 @@ class InfiniProject(InfiniPackage):
 
     @property
     def requirements(self) -> Requirements:
-        # type: ignore
-        return Requirements(self._data.get("requirements") or {}, yggdrasils=self.yggdrasils)
+        return Requirements(
+            self._data.get("requirements") or {}, yggdrasils=self.yggdrasils
+        )
 
     @property
-    def yggdrasils(self) -> List[Yggdrasil]:
-        # type: ignore
-        return [Yggdrasil(index) for _, index in self._data.get("yggdrasils", {}).items()] or []
+    def yggdrasils(self) -> Dict[str, Yggdrasil]:
+        return {
+            name: Yggdrasil(index)
+            for name, index in self._data.get("yggdrasils", {}).items()
+        } or {}
 
 
 class InfiniFrozenPackage(InfiniPackage):
