@@ -26,4 +26,4 @@ def git_tag(target_path: Path, tag: str):
     try:
         repo.create_tag("v" + tag)
     except GitCommandError as err:
-        raise RuntimeError(f"创建 Tag 时出现异常: [red]{err.stderr.strip("\n ")}[/]")
+        raise RuntimeError(f"创建 Tag 时出现异常: [red]{err.stderr.strip('\n ')}[/]")
