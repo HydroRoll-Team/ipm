@@ -127,9 +127,9 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
         echo=echo,
     )
 
-    standalone = confirm("是否为项目分发", default=True)
-    init_git = confirm("初始化 Git 仓库", default=True)
-    init_virtualenv = confirm(f"为 [bold green]{name}[/] 虚拟环境", default=True)
+    standalone = confirm("对项目进行分发?", default=True) if echo else True
+    init_git = confirm("初始化 Git 仓库?", default=True) if echo else True
+    init_virtualenv = confirm(f"创建虚拟环境?", default=True) if echo else True
 
     update("构建环境中...", echo)
 
