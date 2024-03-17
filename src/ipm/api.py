@@ -129,8 +129,10 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
 
     standalone = confirm("对项目进行分发?", default=True) if echo else True
     init_git = confirm("初始化 Git 仓库?", default=True) if echo else True
-    init_virtualenv = confirm(f"创建虚拟环境?", default=True) if echo else True
+    init_virtualenv = confirm("创建虚拟环境?", default=True) if echo else False
+    sync_now = confirm("立刻同步环境?", default=True) if echo else False
 
+    status.start()
     update("构建环境中...", echo)
 
     init_infini(
@@ -159,16 +161,17 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
     if init_virtualenv:
         new_virtualenv(target_path)
 
-    if (
-        result := subprocess.run(
-            ["pdm", "install"],
-            cwd=target_path,
-            capture_output=True,
-            text=True,
-        )
-    ).returncode != 0:
-        error(result.stderr.strip("\n"), echo)
-        raise RuntimeError("PDM 异常退出, 指令忽略.")
+    if sync_now:
+        if (
+            result := subprocess.run(
+                ["pdm", "install"],
+                cwd=target_path,
+                capture_output=True,
+                text=True,
+            )
+        ).returncode != 0:
+            error(result.stderr.strip("\n"), echo)
+            raise RuntimeError("PDM 异常退出, 指令忽略.")
 
     if init_git:
         git_init(target_path)
@@ -196,17 +199,17 @@ def new(dist_path: StrPath, echo: bool = False) -> bool:
     return True
 
 
-def build(source_path: StrPath, echo: bool = False) -> Optional[InfiniFrozenPackage]:
+def build(target_path: StrPath, echo: bool = False) -> Optional[InfiniFrozenPackage]:
     info("构建规则包...", echo)
     update("检查构建环境...", echo)
 
-    if not (Path(source_path).resolve() / "infini.toml").exists():
+    if not (Path(target_path).resolve() / "infini.toml").exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
         )
 
     try:
-        ipk = InfiniProject(source_path)
+        ipk = InfiniProject(target_path)
     except TomlLoadFailed as e:
         return error(f"环境存在异常: {e}", echo)
 
