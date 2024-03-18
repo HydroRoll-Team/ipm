@@ -1,3 +1,4 @@
+from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
@@ -23,10 +24,15 @@ from ipm.exceptions import (
 from ipm.models.ipk import InfiniProject, InfiniFrozenPackage
 from ipm.models.index import Yggdrasil
 
+from infini.loader import Loader
+
 import shutil
+import sys
 import re
+import importlib
 import subprocess
 import tomlkit
+import json
 
 
 def lock(target_path: StrPath, echo: bool = False) -> bool:
@@ -317,8 +323,7 @@ def unrequire(target_path: StrPath, name: str, echo: bool = False):
 
 def add(target_path, name: str, echo: bool = False) -> bool:
     info(f"新增环境依赖项: [bold green]{name}[/bold green]", echo)
-    status.start()
-    status.update("检查环境中...")
+    update("检查环境中...", echo)
     if not (
         match := re.match(r"^((?:[a-zA-Z_-]|\d)+)(?:([>=<]+\d+(?:[.]\d+)*))?$", name)
     ):
@@ -335,7 +340,7 @@ def add(target_path, name: str, echo: bool = False) -> bool:
         )
     success("环境检查完毕.", echo)
 
-    status.update("安装依赖中...")
+    update("安装依赖中...", echo)
 
     name = match.group(1)
     version = match.group(2)
@@ -358,8 +363,7 @@ def add(target_path, name: str, echo: bool = False) -> bool:
 
 def remove(target_path: StrPath, name: str, echo: bool = False):
     info(f"删除环境依赖项: [bold green]{name}[/bold green]", echo)
-    status.start()
-    status.update("检查环境中...")
+    update("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -389,6 +393,32 @@ def remove(target_path: StrPath, name: str, echo: bool = False):
     return True
 
 
-def sync(target_path: StrPath, echo: bool = False) -> bool:
-    ...
+def sync(target_path: StrPath, echo: bool = False) -> bool: ...
+
+
+def doc(target_path: StrPath, type: str, dist: StrPath, echo: bool = False) -> bool:
+    info("构建项目文档...", echo)
+    if type.lower() != "vue":
+        raise EnvironmentError("Only supports for Vue!")
+
+    update("准备环境中...", echo)
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    project = InfiniProject(toml_path.parent)
+    loader = Loader()
+    loader.close()
+    sys.path.append(str(Path.cwd()))
+    module = importlib.import_module("src")
+    loader.load_from_module(module)
+    dist_path = Path(dist).resolve()
+    dist_path.mkdir(parents=True, exist_ok=True)
+    success("环境准备完毕.", echo)
+
+    docs = json.loads(loader.doc.dumps())
+    docs["metadata"] = project.metadata
+    docs["readme"] = project.readme
+    docs["doc_create_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    dist_path.joinpath("index.json").write_text(json.dumps(docs), encoding="utf-8")
     return True

@@ -196,6 +196,21 @@ def remove(name: str = typer.Argument(help="Infini 包名")):
 
 
 @main.command()
+def doc(
+    type: str = typer.Argument("vue", help="前端框架名称"),
+    dist: str = typer.Argument("doc", help="产出路径"),
+):
+    """生成项目文档"""
+    try:
+        if api.doc(Path.cwd(), type, dist, echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
+
+
+@main.command()
 def update():
     """更新 Infini 依赖"""
     raise NotImplementedError
