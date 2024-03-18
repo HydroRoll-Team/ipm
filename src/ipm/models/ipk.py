@@ -176,6 +176,20 @@ class InfiniProject(InfiniPackage):
         return self._data
 
     @property
+    def metadata(self) -> dict:
+        return self._data["project"]  # type: ignore
+
+    @property
+    def readme(self) -> str:
+        project = self._data.get("project")
+        if not project:
+            raise ProjectError("项目文件中不存在`project`项!")
+        path = self._source_path.joinpath(project["readme"])
+        if not path.exists():
+            raise ProjectError("配置文件中的自述文件不存在!")
+        return path.read_text(encoding="utf-8")
+
+    @property
     def name(self) -> str:
         return self._data["project"]["name"]  # type: ignore
 
@@ -192,8 +206,8 @@ class InfiniProject(InfiniPackage):
         return Authors(self._data["project"]["authors"])  # type: ignore
 
     @property
-    def webpage(self) -> str:
-        return self._data["project"]["webpage"]  # type: ignore
+    def homepage(self) -> str:
+        return self._data["project"]["urls"]["homepage"]  # type: ignore
 
     @property
     def unzip(self) -> Union[str, int]:
@@ -219,6 +233,10 @@ class InfiniProject(InfiniPackage):
             name: Yggdrasil(index)
             for name, index in self._data.get("yggdrasils", {}).items()
         } or {}
+
+    @property
+    def topics(self) -> List[str]:
+        return self._data["project"]["topics"]  # type: ignore
 
 
 class InfiniFrozenPackage(InfiniPackage):
