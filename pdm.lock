@@ -5,7 +5,7 @@
 groups = ["default", "dev"]
 strategy = ["cross_platform"]
 lock_version = "4.4.1"
-content_hash = "sha256:4cd7dc51aa010135e9367bfa0605f67224920dadb1354a1ece7cdb5deb41ddb3"
+content_hash = "sha256:5d35a7e2d9605909bd969eedb7cc6b98927b7dbb9a8111d0c70a29d90a245cec"
 
 [[package]]
 name = "certifi"
@@ -162,7 +162,7 @@ files = [
 
 [[package]]
 name = "infini"
-version = "2.1.6"
+version = "2.1.7"
 requires_python = ">=3.8"
 summary = "Infini 内容输入输出流框架"
 dependencies = [
@@ -170,8 +170,8 @@ dependencies = [
     "rich>=13.7.0",
 ]
 files = [
-    {file = "infini-2.1.6-py3-none-any.whl", hash = "sha256:b1ef61462496e762d8b8520da3d9e23f890df41fe790f78554387f5aafe63b28"},
-    {file = "infini-2.1.6.tar.gz", hash = "sha256:b7224bcf06c1598235ece38e689fd4c12eb9ca16c6553983b30bf15714656df3"},
+    {file = "infini-2.1.7-py3-none-any.whl", hash = "sha256:dd214001234fcc8369c8419a1ef6dfd145c62ee431532ec88819f4ca5f1808fb"},
+    {file = "infini-2.1.7.tar.gz", hash = "sha256:c41e90637ba32b1664ca61e726d1abc4b77db4b34571975e12da7f7f52b43464"},
 ]
 
 [[package]]
