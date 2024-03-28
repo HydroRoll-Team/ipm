@@ -3,6 +3,7 @@ from typing import Any, Optional, Union
 from tomlkit.toml_document import TOMLDocument
 
 from ipm.const import INDEX
+from ipm.utils.hash import ifp_hash
 from ipm.models.index import Yggdrasil
 from ipm.models.lock import PackageLock
 from ipm.typing import List, Dict, Literal, StrPath
@@ -10,6 +11,7 @@ from ipm.exceptions import ProjectError, TomlLoadFailed
 
 import tomlkit
 import abc
+
 
 global_lock = PackageLock()
 
@@ -247,19 +249,15 @@ class InfiniProject(InfiniPackage):
 class InfiniFrozenPackage(InfiniPackage):
     def __init__(self, source_path: Union[str, Path], name: str, version: str) -> None:
         self._source_path = Path(source_path).resolve()
-
-        self.hash = (
-            (self._source_path.parent.joinpath(self._source_path.name + ".hash"))
-            .read_bytes()
-            .hex()
-        )
-
         self._name = name
         self._version = version
 
+    def __hash__(self) -> str:
+        return ifp_hash(self._source_path)
+
     @property
-    def hash_name(self) -> str:
-        return f"{self._source_path.name}.hash"
+    def hash(self) -> str:
+        return self.hash
 
     @property
     def name(self) -> str:

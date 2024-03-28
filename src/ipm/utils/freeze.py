@@ -68,7 +68,7 @@ def extract_ipk(
     dist_path = Path(dist_path).resolve()
 
     update("文件校验...", echo)
-    if not ifp_verify(ifp_path, hash):
+    if hash and not ifp_verify(ifp_path, hash):
         raise VerifyFailed("文件完整性验证失败!")
     success("文件校验成功.", echo)
 

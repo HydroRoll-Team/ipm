@@ -246,7 +246,7 @@ def extract(
     dist_path = (
         Path(dist_path).resolve() if dist_path else Path(source_path).resolve().parent
     )
-    return freeze.extract_ipk(source_path, dist_path, echo)
+    return freeze.extract_ipk(source_path, dist_path, None, echo)
 
 
 def yggdrasil_add(
