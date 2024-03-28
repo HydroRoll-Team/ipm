@@ -4,11 +4,14 @@ from tomlkit.toml_document import TOMLDocument
 
 from ipm.const import INDEX
 from ipm.models.index import Yggdrasil
+from ipm.models.lock import PackageLock
 from ipm.typing import List, Dict, Literal, StrPath
 from ipm.exceptions import ProjectError, TomlLoadFailed
 
 import tomlkit
 import abc
+
+global_lock = PackageLock()
 
 
 class Author:
@@ -45,10 +48,13 @@ class Requirement:
         path: Optional[str] = None,
         yggdrasil: Optional[Yggdrasil] = None,
     ) -> None:
+        yggdrasil = yggdrasil or global_lock.get_yggdrasil_by_index(INDEX)
+        if not yggdrasil:
+            raise ProjectError("未能找到任何世界树地址，请先添加一个世界树地址。")
         self.name = name
         self.version = version
         self.path = path
-        self.yggdrasil = yggdrasil or Yggdrasil(INDEX)
+        self.yggdrasil = yggdrasil
 
     def is_local(self) -> bool:
         return bool(self.path)
@@ -67,7 +73,7 @@ class Requirements(List[Requirement]):
             else:
                 for key, value in dependency.items():
                     if key == "index":
-                        yggdrasil = Yggdrasil(key)
+                        yggdrasil = global_lock.get_yggdrasil_by_index(value)
                     elif key == "yggdrasil":
                         yggdrasil = (yggdrasils or {}).get(value)
                         if not yggdrasil:
@@ -228,11 +234,10 @@ class InfiniProject(InfiniPackage):
         )
 
     @property
-    def yggdrasils(self) -> Dict[str, Yggdrasil]:
-        return {
-            name: Yggdrasil(index)
-            for name, index in self._data.get("yggdrasils", {}).items()
-        } or {}
+    def yggdrasils(self) -> Dict[str, str]:
+        res = {name: index for name, index in self._data.get("yggdrasils", {}).items()}
+        res.update({"official": INDEX})
+        return res
 
     @property
     def topics(self) -> List[str]:

@@ -1,6 +1,6 @@
 from pathlib import Path
 from abc import ABCMeta
-from typing import Optional
+from typing import List, Optional
 from ipm.typing import Dict, StrPath
 from ipm.const import IPM_PATH, ATTENTIONS
 from tomlkit import TOMLDocument
@@ -10,6 +10,7 @@ import tomlkit
 
 if TYPE_CHECKING:
     from ipm.models import ipk
+    from ipm.models.index import Yggdrasil
 
 
 class IPMLock(metaclass=ABCMeta):
@@ -45,6 +46,38 @@ class PackageLock(IPMLock):
 
     def __init__(self, source_path: Optional[StrPath] = None) -> None:
         super().__init__(source_path=source_path or IPM_PATH)
+
+    def update_index(self, index: str, uuid: str, lock_path: str) -> bool:
+        indexes = self._data.get("index", [])
+        for i in indexes:
+            if i["uuid"] == uuid:
+                i["url"] = index
+                i["lock"] = lock_path
+        else:
+            aot = tomlkit.aot()
+            aot.append(tomlkit.item({"url": index, "uuid": uuid, "lock": lock_path}))
+            self._data.append("index", aot)
+        self._data["index"] = indexes
+        return True
+
+    def get_all(self) -> List["Yggdrasil"]:
+        from ipm.models.index import Yggdrasil
+
+        if "index" not in self._data.keys():
+            return []
+        res = []
+        for index in self._data["index"]:  # type: ignore
+            res.append(Yggdrasil(index["url"], index["uuid"]))
+        return res
+
+    def get_yggdrasil_by_index(self, index: str) -> Optional["Yggdrasil"]:
+        from ipm.models.index import Yggdrasil
+
+        indexes = self._data.get("index", [])
+        for i in indexes:
+            if i["url"] == index:
+                return Yggdrasil(i["url"], i["uuid"])
+        return None
 
 
 class ProjectLock(IPMLock):
