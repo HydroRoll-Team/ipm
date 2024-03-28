@@ -11,6 +11,7 @@ import tomlkit
 if TYPE_CHECKING:
     from ipm.models import ipk
     from ipm.models.index import Yggdrasil
+    from ipm.models.ipk import InfiniFrozenPackage
 
 
 class IPMLock(metaclass=ABCMeta):
@@ -48,16 +49,18 @@ class PackageLock(IPMLock):
         super().__init__(source_path=source_path or IPM_PATH)
 
     def update_index(self, index: str, uuid: str, lock_path: str) -> bool:
-        indexes = self._data.get("index", [])
+        indexes = self._data.get("index", tomlkit.aot())
         for i in indexes:
             if i["uuid"] == uuid:
                 i["url"] = index
                 i["lock"] = lock_path
+                break
         else:
-            aot = tomlkit.aot()
-            aot.append(tomlkit.item({"url": index, "uuid": uuid, "lock": lock_path}))
-            self._data.append("index", aot)
+            indexes.append(
+                tomlkit.item({"url": index, "uuid": uuid, "lock": lock_path})
+            )
         self._data["index"] = indexes
+        self.dump()
         return True
 
     def get_all(self) -> List["Yggdrasil"]:
@@ -78,6 +81,10 @@ class PackageLock(IPMLock):
             if i["url"] == index:
                 return Yggdrasil(i["url"], i["uuid"])
         return None
+
+    def has_package(self, filename: str): ...
+
+    def add_frozen_package(self, ifp: "InfiniFrozenPackage"): ...
 
 
 class ProjectLock(IPMLock):
