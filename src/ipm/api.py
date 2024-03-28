@@ -55,7 +55,7 @@ def lock(target_path: StrPath, echo: bool = False) -> bool:
 
 def check(target_path: StrPath, echo: bool = False) -> bool:
     info("检查项目环境...", echo)
-    update("检查基础环境中...")
+    update("检查基础环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -66,12 +66,12 @@ def check(target_path: StrPath, echo: bool = False) -> bool:
     update("同步世界树中...", echo)
     global_lock = PackageLock()
     for index in project.yggdrasils.values():
-        update(f"同步世界树: {index}...")
+        update(f"同步世界树: [green]{index}[/]...", echo)
         if not (yggdrasil := global_lock.get_yggdrasil_by_index(index)):
             Yggdrasil.init(index)
         else:
             yggdrasil.sync()
-    success("世界树同步完毕.", echo)
+        success(f"世界树 [green]{index}[/] 同步完毕.", echo)
 
     if not lock(target_path, echo=echo):
         return False

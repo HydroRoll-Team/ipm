@@ -4,7 +4,8 @@ from pathlib import Path
 DEBUG = False
 
 # 初始化参数
-INDEX = "https://ipm.hydroroll.team/index/"
+# INDEX = "http://localhost:5173/"
+INDEX = "https://yggdrasil.noctisynth.org/"
 IPM_PATH = Path.home() / ".ipm"
 SRC_HOME = IPM_PATH / "src"
 STORAGE = IPM_PATH / "storage"
