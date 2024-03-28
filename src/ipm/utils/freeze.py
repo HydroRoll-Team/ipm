@@ -51,13 +51,8 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
 
     update("创建 SHA256 验证文件...", echo)
     hash_bytes = ifp_hash(ifp_path)
-    info(f"文件 SHA256 值为 [purple]{hash_bytes.hex()}[/purple].", echo)
+    info(f"文件 SHA256 值为 [purple]{hash_bytes}[/purple].", echo)
 
-    # update("正在生成 id.xml 文件...", echo)
-    # _freeze.create_xml_file(project, dist_path)
-    # success("xml 索引文件生成完毕.", echo)
-
-    (dist_path / ipk.hash_name).write_bytes(hash_bytes)
     success(
         f"包 [bold green]{ipk.name}[/bold green] [yellow]{ipk.version}[/yellow] 构建成功.",
         echo,
@@ -67,23 +62,19 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
 
 
 def extract_ipk(
-    source_path: StrPath, dist_path: StrPath, echo: bool = False
+    source_path: StrPath, dist_path: StrPath, hash: Optional[str], echo: bool = False
 ) -> Optional[InfiniProject]:
     ifp_path = Path(source_path).resolve()
     dist_path = Path(dist_path).resolve()
-    hash_path = ifp_path.parent / (ifp_path.name + ".hash")
 
-    if not hash_path.exists():
-        raise VerifyFailed(f"哈希文件 [blue]{hash_path}[/blue] 不存在!")
-
-    update("文件校验...")
-    if not ifp_verify(ifp_path, hash_path.read_bytes()):
+    update("文件校验...", echo)
+    if not ifp_verify(ifp_path, hash):
         raise VerifyFailed("文件完整性验证失败!")
-    success("文件校验成功.")
+    success("文件校验成功.", echo)
 
     temp_dir = tempfile.TemporaryDirectory()
     temp_path = Path(temp_dir.name).resolve() / "ifp"
-    info(f"创建临时目录 [blue]{temp_dir}[/blue].")
+    info(f"创建临时目录 [blue]{temp_dir}[/blue].", echo)
 
     update(f"解压 [blue]{ifp_path}[/blue]...", echo)
     _freeze.extract_tar_gz(str(ifp_path), str(temp_path))
