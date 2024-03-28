@@ -2,7 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from ipm.models.lock import ProjectLock
+from ipm.models.lock import PackageLock, ProjectLock
 from ipm.project.env import new_virtualenv
 from ipm.project.toml_file import (
     add_yggdrasil,
@@ -36,7 +36,7 @@ import json
 
 
 def lock(target_path: StrPath, echo: bool = False) -> bool:
-    info("项目环境检查...", echo)
+    info("生成项目锁...", echo)
 
     update("检查环境中...")
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
@@ -54,11 +54,28 @@ def lock(target_path: StrPath, echo: bool = False) -> bool:
 
 
 def check(target_path: StrPath, echo: bool = False) -> bool:
+    info("检查项目环境...", echo)
+    update("检查基础环境中...")
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    project = InfiniProject(toml_path.parent)
+    success("环境检查完毕.", echo)
+
+    update("同步世界树中...", echo)
+    global_lock = PackageLock()
+    for index in project.yggdrasils.values():
+        update(f"同步世界树: {index}...")
+        if not (yggdrasil := global_lock.get_yggdrasil_by_index(index)):
+            Yggdrasil.init(index)
+        else:
+            yggdrasil.sync()
+    success("世界树同步完毕.", echo)
+
     if not lock(target_path, echo=echo):
         return False
 
-    update("处理环境配置中...", echo)
-    warning("同步指令暂未被实装, 忽略.", echo)
     return True
 
 
@@ -243,10 +260,7 @@ def yggdrasil_add(
         )
     success("环境检查完毕.", echo)
     update("同步世界树中...", echo)
-    yggdrasil = Yggdrasil(index)
-    yggdrasil.sync()
-    warning("世界树同步模块未实装, 忽略.", echo)
-
+    Yggdrasil.init(index)
     add_yggdrasil(toml_path, name, index)
     success("更改均已写入文件.", echo)
     return True
