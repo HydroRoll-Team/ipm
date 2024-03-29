@@ -211,6 +211,30 @@ def doc(
 
 
 @main.command()
+def sync():
+    """同步依赖环境"""
+    try:
+        if api.sync(Path.cwd(), echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
+
+
+@main.command()
+def install():
+    """安装规则包环境"""
+    try:
+        if api.install(Path.cwd(), echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
+
+
+@main.command()
 def update():
     """更新 Infini 依赖"""
     raise NotImplementedError

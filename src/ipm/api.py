@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from ipm.const import INDEX
 from ipm.models.lock import PackageLock, ProjectLock
 from ipm.project.env import new_virtualenv
 from ipm.project.toml_file import (
@@ -11,11 +12,12 @@ from ipm.project.toml_file import (
     remove_yggdrasil,
 )
 from ipm.typing import StrPath
-from ipm.utils import freeze
+from ipm.utils import freeze, loader
 from ipm.utils.git import get_user_name_email, git_init, git_tag
 from ipm.logging import confirm, status, update, info, success, warning, error, ask
 from ipm.exceptions import (
     EnvironmentError,
+    ProjectError,
     TomlLoadFailed,
     FileNotFoundError,
     NameError,
@@ -240,13 +242,17 @@ def build(target_path: StrPath, echo: bool = False) -> Optional[InfiniFrozenPack
 
 
 def extract(
-    source_path: StrPath, dist_path: Optional[StrPath] = None, echo: bool = False
-) -> Optional[InfiniProject]:
+    source_path: StrPath,
+    hash: Optional[str] = None,
+    dist_path: Optional[StrPath] = None,
+    echo: bool = False,
+) -> bool:
     info("解压缩规则包...", echo)
     dist_path = (
         Path(dist_path).resolve() if dist_path else Path(source_path).resolve().parent
     )
-    return freeze.extract_ipk(source_path, dist_path, None, echo)
+    freeze.extract_ipk(source_path, dist_path, hash=hash)
+    return True
 
 
 def yggdrasil_add(
@@ -290,14 +296,23 @@ def require(
     echo: bool = False,
 ) -> bool:
     info(f"新增规则包依赖: [bold green]{name}[/bold green]", echo)
-    status.start()
-    status.update("检查环境中...")
+    update("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
         )
     project = InfiniProject(toml_path.parent)
+    global_lock = PackageLock()
     success("环境检查完毕.", echo)
+
+    update("检查世界树中...", echo)
+    ygd = (
+        Yggdrasil.init(index or INDEX)
+        if not global_lock.has_index(index or INDEX)
+        else global_lock.get_yggdrasil_by_index(index or INDEX)
+    )
+    if not ygd:
+        raise ProjectError("世界树检查失败！")
 
     splited_name = name.split("==")  # TODO 支持 >= <= > < 标识
     name = splited_name[0]
@@ -305,9 +320,14 @@ def require(
     if len(splited_name) > 1:
         version = splited_name[1]
     else:
-        version = "*"
+        version = ygd.get_lastest_version(name)
 
-    status.update("处理 Infini 项目依赖锁...")
+    if not version:
+        raise ProjectError(f"无法找到一个匹配 [red]{name}[/] 的版本。")
+
+    check(target_path, echo=echo)
+
+    update("处理 Infini 项目依赖锁...", echo)
     project.require(
         name,
         version=version,
@@ -317,7 +337,7 @@ def require(
     )
     project.dump()
     success("项目文件写入完成.", echo)
-    check(target_path, echo=echo)
+
     # sync()
     success("规则包依赖新增完成.", echo)
     return True
@@ -407,13 +427,79 @@ def remove(target_path: StrPath, name: str, echo: bool = False):
     return True
 
 
-def sync(target_path: StrPath, echo: bool = False) -> bool: ...
+def sync(target_path: StrPath, echo: bool = False) -> bool:
+    info(f"同步依赖环境...", echo)
+    update("检查环境中...", echo)
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    InfiniProject(toml_path.parent)
+    lock = ProjectLock(target_path)
+    global_lock = PackageLock()
+    if not shutil.which("pdm"):
+        raise EnvironmentError(
+            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+        )
+    success("环境检查完毕.", echo)
+
+    update("同步依赖环境中...", echo)
+    for requirement in lock.requirements:
+        if not requirement.is_local():
+            if global_lock.has_frozen_package(requirement.name, requirement.version):
+                continue
+            update(
+                f"下载 [bold green]{requirement.name}=={requirement.version}[/]...",
+                echo,
+            )
+            ifp = loader.load_from_remote(
+                requirement.name,
+                requirement.yggdrasil.index.rstrip("/") + (requirement.url or ""),
+                requirement.hash or "",
+            )
+            global_lock.add_frozen_package(
+                requirement.name,
+                requirement.version,
+                requirement.hash or "",
+                requirement.yggdrasil.index,
+                str(ifp._source_path),
+            )
+            success(
+                f"[bold green]{requirement.name} {requirement.version}[/] 安装完成！",
+                echo,
+            )
+    success("依赖环境同步完毕！", echo)
+    return True
+
+
+def install(target_path: StrPath, echo: bool = False) -> bool:
+    info("安装规则表环境中...", echo)
+    update("检查环境中...", echo)
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    InfiniProject(toml_path.parent)
+    lock = ProjectLock(target_path)
+    global_lock = PackageLock()
+    if not shutil.which("pdm"):
+        raise EnvironmentError(
+            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+        )
+    success("环境检查完毕.", echo)
+
+    check(target_path, echo)
+    sync(target_path, echo)
+
+    return True
 
 
 def doc(target_path: StrPath, type: str, dist: StrPath, echo: bool = False) -> bool:
     info("构建项目文档...", echo)
     if type.lower() != "vue":
-        raise EnvironmentError("Only supports for Vue!")
+        raise EnvironmentError("目前仅支持 Vue!")
 
     update("准备环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
