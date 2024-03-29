@@ -2,6 +2,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
+from ipm import project
 from ipm.const import INDEX
 from ipm.models.lock import PackageLock, ProjectLock
 from ipm.project.env import new_virtualenv
@@ -40,7 +41,7 @@ import json
 def lock(target_path: StrPath, echo: bool = False) -> bool:
     info("生成项目锁...", echo)
 
-    update("检查环境中...")
+    update("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -434,7 +435,7 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
         )
-    InfiniProject(toml_path.parent)
+    project = InfiniProject(toml_path.parent)
     lock = ProjectLock(target_path)
     global_lock = PackageLock()
     if not shutil.which("pdm"):
@@ -469,19 +470,36 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
                 f"[bold green]{requirement.name} {requirement.version}[/] 安装完成！",
                 echo,
             )
+    update("同步依赖环境中...", echo)
+    dependencies = []
+    for name, version in project.dependencies.items():
+        if version == "*":
+            dependencies.append(name)
+        else:
+            dependencies.append(f"{name}{version}")
+    if (
+        result := subprocess.run(
+            ["pdm", "add", *dependencies],
+            cwd=target_path,
+            capture_output=True,
+            text=True,
+        )
+    ).returncode != 0:
+        error(result.stderr.strip("\n"), echo)
+        raise RuntimeError("PDM 异常退出, 指令忽略.")
+
     success("依赖环境同步完毕！", echo)
     return True
 
 
 def install(target_path: StrPath, echo: bool = False) -> bool:
-    info("安装规则表环境中...", echo)
+    info("安装规则包环境中...", echo)
     update("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
         )
-    InfiniProject(toml_path.parent)
-    lock = ProjectLock(target_path)
+    project = InfiniProject(toml_path.parent)
     global_lock = PackageLock()
     if not shutil.which("pdm"):
         raise EnvironmentError(
@@ -492,6 +510,30 @@ def install(target_path: StrPath, echo: bool = False) -> bool:
 
     check(target_path, echo)
     sync(target_path, echo)
+
+    update("安装依赖中...", echo)
+    lock = ProjectLock(target_path)
+    packages_path = toml_path.parent.joinpath("packages")
+    packages_path.mkdir(parents=True, exist_ok=True)
+    ProjectLock.init_from_project(project, packages_path)
+    for requirement in lock.requirements:
+        try:
+            prj = InfiniProject(packages_path.joinpath(requirement.name))
+            if prj.version >= requirement.version:
+                continue
+        except:
+            pass
+        path = global_lock.get_frozen_package_path(
+            requirement.name, requirement.version
+        )
+        if not path:
+            raise ProjectError(
+                f"无法找到依赖 [red]{requirement.name} {requirement.version}[/]."
+            )
+        prj = freeze.extract_ipk(path, packages_path, hash=requirement.hash)
+        shutil.move(
+            str(prj._source_path), str(prj._source_path.parent.joinpath(prj.name))
+        )
 
     return True
 
