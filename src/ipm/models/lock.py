@@ -1,6 +1,7 @@
 from pathlib import Path
 from abc import ABCMeta
-from typing import List, Optional
+from typing import Any, List, Optional
+from ipm.models.requirement import Requirement
 from ipm.typing import Dict, StrPath
 from ipm.const import IPM_PATH, ATTENTIONS
 from tomlkit import TOMLDocument
@@ -54,14 +55,21 @@ class PackageLock(IPMLock):
             if i["uuid"] == uuid:
                 i["url"] = index
                 i["lock"] = lock_path
+                self._data["index"] = indexes
                 break
         else:
-            indexes.append(
-                tomlkit.item({"url": index, "uuid": uuid, "lock": lock_path})
-            )
-        self._data["index"] = indexes
+            aot = tomlkit.aot()
+            aot.append(tomlkit.item({"url": index, "uuid": uuid, "lock": lock_path}))
+            self._data.add("index", aot)
         self.dump()
         return True
+
+    def has_index(self, index: Any) -> bool:
+        for i in self._data.get("index", tomlkit.aot()):
+            if i["url"].strip("/") == index.strip("/"):
+                return True
+        else:
+            return False
 
     def get_all(self) -> List["Yggdrasil"]:
         from ipm.models.index import Yggdrasil
@@ -84,7 +92,7 @@ class PackageLock(IPMLock):
 
     def has_package(self, filename: str): ...
 
-    def add_frozen_package(self, ifp: "InfiniFrozenPackage"): ...
+    def add_frozen_package(self, name: str, hash: str,): ...
 
 
 class ProjectLock(IPMLock):
@@ -126,9 +134,26 @@ class ProjectLock(IPMLock):
                             "name": requirement.name,
                             "version": requirement.version,
                             "yggdrasil": requirement.yggdrasil.index,
+                            "url": requirement.url,
                         }
                     )
                 )
-        lock._data.add("packages", packages)
+        lock._data.add("package", packages)
 
         return lock
+
+    @property
+    def requirements(self) -> List[Requirement]:
+        from ipm.models.lock import PackageLock
+
+        global_lock = PackageLock()
+        return [
+            Requirement(
+                package["name"],
+                package["version"],
+                path=package.get("path"),
+                url=package.get("url"),
+                yggdrasil=global_lock.get_yggdrasil_by_index(package.get("yggdrasil")),
+            )
+            for package in self._data.unwrap().get("package", [])
+        ]
