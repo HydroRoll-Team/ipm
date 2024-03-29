@@ -19,7 +19,7 @@ def init_infini(
     entry_file: str,
     default_entries: List[str],
 ) -> None:
-    toml_path = target_path.joinpath("pyproject.toml")
+    toml_path = target_path.joinpath("infini.toml")
     if toml_path.exists():
         toml_data = tomlkit.loads(toml_path.read_text(encoding="utf-8"))
     else:
