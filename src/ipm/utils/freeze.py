@@ -65,7 +65,7 @@ def extract_ipk(
     source_path: StrPath,
     dist_path: StrPath,
     hash: Optional[str] = None,
-) -> Optional[InfiniProject]:
+) -> InfiniProject:
     ifp_path = Path(source_path).resolve()
     dist_path = Path(dist_path).resolve()
 
@@ -82,10 +82,7 @@ def extract_ipk(
     dist_pkg_path = dist_path.joinpath(temp_pkg.default_name)
 
     if dist_pkg_path.exists():
-        try:
-            shutil.rmtree(dist_pkg_path)
-        except Exception as err:
-            return error(str(err))
+        shutil.rmtree(dist_pkg_path)
 
     shutil.move(arc_path, dist_path)
 
