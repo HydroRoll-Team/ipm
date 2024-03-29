@@ -62,44 +62,32 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
 
 
 def extract_ipk(
-    source_path: StrPath, dist_path: StrPath, hash: Optional[str], echo: bool = False
+    source_path: StrPath,
+    dist_path: StrPath,
+    hash: Optional[str] = None,
 ) -> Optional[InfiniProject]:
     ifp_path = Path(source_path).resolve()
     dist_path = Path(dist_path).resolve()
 
-    update("文件校验...", echo)
     if hash and not ifp_verify(ifp_path, hash):
         raise VerifyFailed("文件完整性验证失败!")
-    success("文件校验成功.", echo)
 
     temp_dir = tempfile.TemporaryDirectory()
     temp_path = Path(temp_dir.name).resolve() / "ifp"
-    info(f"创建临时目录 [blue]{temp_dir}[/blue].", echo)
 
-    update(f"解压 [blue]{ifp_path}[/blue]...", echo)
     _freeze.extract_tar_gz(str(ifp_path), str(temp_path))
 
     arc_path = next(temp_path.iterdir())
     temp_pkg = InfiniProject(arc_path)
     dist_pkg_path = dist_path.joinpath(temp_pkg.default_name)
-    success(
-        f"[bold green]{temp_pkg.name}[/bold green] [yellow]{temp_pkg.version}[/yellow] 已解压至缓存目录.",
-        echo,
-    )
 
     if dist_pkg_path.exists():
-        update("目标路径已存在, 清理旧文件...", echo)
         try:
             shutil.rmtree(dist_pkg_path)
         except Exception as err:
             return error(str(err))
-        success("旧规则包项目文件清理完毕.", echo)
 
-    update(f"迁移文件至目标目录...", echo)
     shutil.move(arc_path, dist_path)
-    success(f"文件已迁移至 [blue]{dist_pkg_path}[/blue].", echo)
 
-    update(f"清理临时文件...", echo)
     temp_dir.cleanup()
-    success(f"临时文件清理完毕.", echo)
     return InfiniProject(dist_pkg_path)
