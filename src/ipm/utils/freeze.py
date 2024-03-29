@@ -13,9 +13,8 @@ import shutil
 
 def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
     update("构建开发环境...", echo)
-    project = InfiniProject()
 
-    arcname = f"{project.name}-{project.version}"
+    arcname = f"{ipk.name}-{ipk.version}"
     build_dir = ipk._source_path.joinpath(".ipm-build")
     arc_dir = build_dir.joinpath(arcname)
     src_path = ipk._source_path / "src"
@@ -58,7 +57,7 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
         echo,
     )
 
-    return InfiniFrozenPackage(ifp_path, ipk.name, version=project.version)
+    return InfiniFrozenPackage(ifp_path, ipk.name, version=ipk.version)
 
 
 def extract_ipk(

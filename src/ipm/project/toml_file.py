@@ -19,21 +19,25 @@ def init_infini(
     entry_file: str,
     default_entries: List[str],
 ) -> None:
+    toml_path = target_path.joinpath("pyproject.toml")
+    if toml_path.exists():
+        toml_data = tomlkit.loads(toml_path.read_text(encoding="utf-8"))
+    else:
+        toml_data = tomlkit.document()
     toml_file = toml_path.open("w", encoding="utf-8")
-    toml_data = tomlkit.document()
-    project = tomlkit.table()
-    project.add("name", name)
-    project.add("version", version)
-    project.add("description", description)
+    project = toml_data.get("project", tomlkit.table())
+    project["name"] = name
+    project["version"] = version
+    project["description"] = description
     author = tomlkit.array()
     author.add_line({"name": author_name, "email": author_email})
     author.multiline(True)
-    project.add("authors", author)
-    project.add("license", license)
-    project.add("readme", "README.md")
-    toml_data.add("project", project)
-    toml_data.add("requirements", tomlkit.table())
-    toml_data.add("dependencies", tomlkit.table())
+    project["authors"] = author
+    project["license"] = license
+    project["readme"] = "README.md"
+    toml_data["project"] = project
+    toml_data["requirements"] = tomlkit.table()
+    toml_data["dependencies"] = tomlkit.table()
     tomlkit.dump(toml_data, toml_file)
     toml_file.close()
 
@@ -130,22 +134,26 @@ def init_pyproject(
     license: str,
     standalone: bool,
 ):
-    toml_file = target_path.joinpath("pyproject.toml").open("w", encoding="utf-8")
-    toml_data = tomlkit.document()
-    project = tomlkit.table()
-    project.add("name", name)
-    project.add("version", version)
-    project.add("description", description)
+    toml_path = target_path.joinpath("pyproject.toml")
+    if toml_path.exists():
+        toml_data = tomlkit.loads(toml_path.read_text(encoding="utf-8"))
+    else:
+        toml_data = tomlkit.document()
+    toml_file = toml_path.open("w", encoding="utf-8")
+    project = toml_data.get("project", tomlkit.table())
+    project["name"] = name
+    project["version"] = version
+    project["description"] = description
     author = tomlkit.array()
     author.add_line({"name": author_name, "email": author_email})
     author.multiline(True)
-    project.add("authors", author)
+    project["authors"] = author
     license_table = tomlkit.inline_table()
     license_table.update({"text": license})
-    project.add("license", license_table)
-    project.add("dependencies", tomlkit.array('["infini>2.1.0"]'))
-    project.add("requires-python", ">=3.8")
-    project.add("readme", "README.md")
+    project["license"] = license_table
+    project["dependencies"] = tomlkit.array('["infini>2.1.0"]')
+    project["requires-python"] = ">=3.8"
+    project["readme"] = "README.md"
 
     tool = tomlkit.table(True)
     pdm = tomlkit.table(True)
@@ -156,7 +164,7 @@ def init_pyproject(
     pdm.append("dev-dependencies", dev_dependencies)
     tool.append("pdm", pdm)
 
-    toml_data.add("project", project)
-    toml_data.add("tool", tool)
+    toml_data["project"] = project
+    toml_data["tool"] = tool
     tomlkit.dump(toml_data, toml_file)
     toml_file.close()
