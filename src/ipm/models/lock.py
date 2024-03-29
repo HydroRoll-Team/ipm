@@ -71,7 +71,7 @@ class PackageLock(IPMLock):
         else:
             return False
 
-    def get_all(self) -> List["Yggdrasil"]:
+    def get_all_indexes(self) -> List["Yggdrasil"]:
         from ipm.models.index import Yggdrasil
 
         if "index" not in self._data.keys():
@@ -115,6 +115,13 @@ class PackageLock(IPMLock):
         self._data.add("package", aot)
         self.dump()
 
+    def get_frozen_package_path(self, name: str, version: str) -> Optional[Path]:
+        data = self._data.unwrap()
+        for package in data.get("package", []):
+            if package["name"] == name and package["version"] == version:
+                return Path(package["path"])
+        return
+
 
 class ProjectLock(IPMLock):
     """IPM 项目锁"""
@@ -125,8 +132,10 @@ class ProjectLock(IPMLock):
         )
 
     @staticmethod
-    def init_from_project(project: "ipk.InfiniProject") -> "ProjectLock":
-        lock = ProjectLock(project._source_path)
+    def init_from_project(
+        project: "ipk.InfiniProject", dist_path: Optional[Path] = None
+    ) -> "ProjectLock":
+        lock = ProjectLock(dist_path or project._source_path)
         lock._data = tomlkit.document()
 
         metadata = tomlkit.table()
