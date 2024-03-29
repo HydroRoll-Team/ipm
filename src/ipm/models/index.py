@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal, Optional, Union
 from ipm.const import INDEX_PATH
 from ipm.exceptions import LockLoadFailed
 from ipm.typing import Dict
@@ -28,7 +28,7 @@ class Yggdrasil:
         json.dump(self._data, self._source_path.open("w", encoding="utf-8"))
 
     @staticmethod
-    def try_loads(path: Path) -> Dict | Literal[False]:
+    def try_loads(path: Path) -> Union[Dict, Literal[False]]:
         try:
             return json.loads(path.read_text(encoding="utf-8"))
         except Exception as e:
