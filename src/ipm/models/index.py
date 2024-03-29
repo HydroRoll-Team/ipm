@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Any, Literal, Optional
 from ipm.const import INDEX_PATH
 from ipm.exceptions import LockLoadFailed
-from ipm.models.lock import PackageLock
 from ipm.typing import Dict
 
 import requests
@@ -45,6 +44,8 @@ class Yggdrasil:
 
     @staticmethod
     def init(index: str) -> "Yggdrasil":
+        from ipm.models.lock import PackageLock
+
         lock_bytes = requests.get(
             index.rstrip("/") + "/" + "json/packages.json"
         ).content
@@ -98,6 +99,11 @@ class Yggdrasil:
         for distribution in package["distributions"]:
             if distribution["version"] == match_version:
                 return distribution["hash"]
+
+    def get_lastest_version(self, name: str) -> Optional[str]:
+        if name not in self.packages:
+            return None
+        return self.packages[name]["latestVersion"]
 
     @property
     def uuid(self) -> str:
