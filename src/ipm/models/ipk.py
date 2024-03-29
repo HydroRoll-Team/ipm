@@ -163,7 +163,7 @@ class InfiniProject(InfiniPackage):
         return self._data["project"]["license"]  # type: ignore
 
     @property
-    def dependencies(self) -> Dict[str, Any]:
+    def dependencies(self) -> Dict[str, str]:
         return self._data.get("dependencies", {})  # type: ignore
 
     @property
