@@ -3,8 +3,8 @@ from typing import Any, Optional, Union
 from tomlkit.toml_document import TOMLDocument
 
 from ipm.const import INDEX
+from ipm.models.requirement import Requirements
 from ipm.utils.hash import ifp_hash
-from ipm.models.index import Yggdrasil
 from ipm.models.lock import PackageLock
 from ipm.typing import List, Dict, Literal, StrPath
 from ipm.exceptions import ProjectError, TomlLoadFailed
@@ -37,73 +37,10 @@ class Authors:
         return None if not self.authors else self.authors[0]
 
 
-class Requirement:
-    name: str
-    version: str
-    path: Optional[str]
-    yggdrasil: Yggdrasil
-
-    def __init__(
-        self,
-        name: str,
-        version: str,
-        path: Optional[str] = None,
-        yggdrasil: Optional[Yggdrasil] = None,
-    ) -> None:
-        yggdrasil = yggdrasil or global_lock.get_yggdrasil_by_index(INDEX)
-        if not yggdrasil:
-            raise ProjectError("未能找到任何世界树地址，请先添加一个世界树地址。")
-        self.name = name
-        self.version = version
-        self.path = path
-        self.yggdrasil = yggdrasil
-
-    def is_local(self) -> bool:
-        return bool(self.path)
-
-
-class Requirements(List[Requirement]):
-    def __init__(
-        self,
-        dependencies: Dict[str, Union[Dict, str]],
-        yggdrasils: Optional[Dict[str, Yggdrasil]] = None,
-    ) -> None:
-        path = yggdrasil = version = None
-        for name, dependency in dependencies.items():
-            if isinstance(dependency, str):
-                self.append(Requirement(name=name, version=dependency))
-            else:
-                for key, value in dependency.items():
-                    if key == "index":
-                        yggdrasil = global_lock.get_yggdrasil_by_index(value)
-                    elif key == "yggdrasil":
-                        yggdrasil = (yggdrasils or {}).get(value)
-                        if not yggdrasil:
-                            raise ValueError(f"未知的世界树标识符: '{value}'")
-                    elif key == "path":
-                        path = value
-                    elif key == "version":
-                        version = value
-                    else:
-                        raise ValueError(f"未知的依赖项键值: '{key}'")
-                self.append(
-                    Requirement(
-                        name=name,
-                        version=version or "*",
-                        path=path,
-                        yggdrasil=yggdrasil,
-                    )
-                )
-
-
 class InfiniPackage(metaclass=abc.ABCMeta):
     @property
     def default_name(self) -> str:
         return f"{self.name}-{self.version}"
-
-    @property
-    def hash_name(self) -> str:
-        return f"{self.name}-{self.version}.ipk.hash"
 
     @property
     @abc.abstractmethod
@@ -232,7 +169,11 @@ class InfiniProject(InfiniPackage):
     @property
     def requirements(self) -> Requirements:
         return Requirements(
-            self._data.get("requirements") or {}, yggdrasils=self.yggdrasils
+            self._data.get("requirements") or {},
+            yggdrasils={
+                name: global_lock.get_yggdrasil_by_index(url)
+                for name, url in self.yggdrasils.items()
+            },
         )
 
     @property
