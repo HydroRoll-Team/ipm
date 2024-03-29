@@ -32,7 +32,6 @@ class Yggdrasil:
         try:
             return json.loads(path.read_text(encoding="utf-8"))
         except Exception as e:
-            print(e)
             return False
 
     @staticmethod
