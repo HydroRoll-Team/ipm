@@ -90,9 +90,30 @@ class PackageLock(IPMLock):
                 return Yggdrasil(i["url"], i["uuid"])
         return None
 
-    def has_package(self, filename: str): ...
+    def has_frozen_package(self, name: str, version: str) -> bool:
+        data = self._data.unwrap()
+        for package in data.get("package", []):
+            if package["name"] == name and package["version"] == version:
+                return True
+        return False
 
-    def add_frozen_package(self, name: str, hash: str,): ...
+    def add_frozen_package(
+        self, name: str, version: str, hash: str, yggdrasil: str, path: str
+    ):
+        aot = tomlkit.aot()
+        aot.append(
+            tomlkit.item(
+                {
+                    "name": name,
+                    "version": version,
+                    "hash": hash,
+                    "yggdrasil": yggdrasil,
+                    "path": path,
+                }
+            )
+        )
+        self._data.add("package", aot)
+        self.dump()
 
 
 class ProjectLock(IPMLock):
