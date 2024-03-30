@@ -578,8 +578,12 @@ def doc(
     project = InfiniProject(toml_path.parent)
     loader = Loader()
     loader.close()
-    sys.path.append(str(target_path))
-    module = importlib.import_module("src")
+    if toml_path.parent.joinpath("src", "__init__.py").exists():
+        sys.path.append(str(target_path))
+        module = importlib.import_module("src")
+    else:
+        sys.path.append(str(toml_path.parent.joinpath("src")))
+        module = importlib.import_module(project.name)
     loader.load_from_module(module)
     dist_path = Path(dist).resolve()
     dist_path.mkdir(parents=True, exist_ok=True)
