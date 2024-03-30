@@ -122,7 +122,7 @@ class InfiniProject(InfiniPackage):
 
     @property
     def metadata(self) -> dict:
-        return self._data["project"]  # type: ignore
+        return self._data.unwrap()["project"]
 
     @property
     def readme(self) -> str:
@@ -143,35 +143,35 @@ class InfiniProject(InfiniPackage):
 
     @property
     def name(self) -> str:
-        return self._data["project"]["name"]  # type: ignore
+        return self._data.unwrap()["project"]["name"]
 
     @property
     def version(self) -> str:
-        return self._data["project"]["version"]  # type: ignore
+        return self._data.unwrap()["project"]["version"]
 
     @property
     def description(self) -> str:
-        return self._data["project"]["description"]  # type: ignore
+        return self._data.unwrap()["project"]["description"]
 
     @property
     def authors(self) -> Authors:
-        return Authors(self._data["project"]["authors"])  # type: ignore
+        return Authors(self._data.unwrap()["project"]["authors"])
 
     @property
     def homepage(self) -> str:
-        return self._data["project"]["urls"]["homepage"]  # type: ignore
+        return self._data.unwrap()["project"]["urls"]["homepage"]
 
     @property
-    def unzip(self) -> Union[str, int]:
-        return self._data["project"]["unzip"]  # type: ignore
+    def urls(self) -> Dict[str, str]:
+        return self._data.unwrap()["project"]["urls"]
 
     @property
     def license(self) -> str:
-        return self._data["project"]["license"]  # type: ignore
+        return self._data.unwrap()["project"]["license"]
 
     @property
     def dependencies(self) -> Dict[str, str]:
-        return self._data.get("dependencies", {})  # type: ignore
+        return self._data.get("dependencies", {})
 
     @property
     def requirements(self) -> Requirements:
@@ -191,7 +191,7 @@ class InfiniProject(InfiniPackage):
 
     @property
     def topics(self) -> List[str]:
-        return self._data["project"]["topics"]  # type: ignore
+        return self._data.unwrap()["project"]["topics"]
 
 
 class InfiniFrozenPackage(InfiniPackage):
