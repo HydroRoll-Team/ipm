@@ -86,6 +86,7 @@ VUE_CODE = """<script setup lang="ts">
 import Header from '@/components/Header.vue';
 import MarkdownIt from 'markdown-it';
 import plainData from './index.json';
+import Message from 'primevue/message';
 import Card from 'primevue/card';
 import Button from 'primevue/button';
 import TabView from 'primevue/tabview';
@@ -95,6 +96,7 @@ import Tag from 'primevue/tag';
 import DataTable from 'primevue/datatable';
 import Column from 'primevue/column';
 import packages from '@/scripts/packages';
+import router from '@/router';
 
 const jsonData: any = plainData;
 const index = packages[jsonData.metadata.name];
@@ -137,12 +139,16 @@ function tablize(data: { [key: string]: string }): {
                 style="max-width: 960px;">
                 <Card class="w-full">
                     <template #title>
+                        <Message v-if="index.latestVersion != jsonData.metadata.version" severity="warn"
+                            :closable="false">此版本不是最新版，<Button @click="router.push('/packages/' + index.name)"
+                                :label="index.latestVersion" class="pt-0 pb-0 pl-1 pr-1" plain text></Button>已发布！
+                        </Message>
                         <div class="header gap-3 align-items-center justify-content-between">
                             <h1 class="text-5xl">
                                 {{ jsonData.metadata.name }}
                                 <span class="text-base text-gray-400">v{{ jsonData.metadata.version }}</span>
                             </h1>
-                            <div>
+                            <div v-if="jsonData.metadata.urls !== undefined">
                                 <Button v-if="jsonData.metadata.urls.homepage !== undefined"
                                     @click="link_to(jsonData.metadata.urls.homepage, true)" icon="pi pi-home" plain
                                     text></Button>
@@ -209,38 +215,42 @@ function tablize(data: { [key: string]: string }): {
                                         </Panel>
                                     </div>
                                 </div>
-                                <div v-if="jsonData.metadata.urls.homepage !== undefined">
-                                    <h2 class="pl-2 text-lg">主页</h2>
-                                    <div class="flex flex-column align-items-start pb-1">
-                                        <Button @click="link_to(jsonData.metadata.urls.homepage)" icon="pi pi-link"
-                                            :label="slice_url(jsonData.metadata.urls.homepage)"
-                                            class="w-full flex flex-row justify-content-start" plain text>
-                                        </Button>
+                                <div v-if="jsonData.metadata.urls !== undefined">
+                                    <div v-if="jsonData.metadata.urls.homepage !== undefined">
+                                        <h2 class="pl-2 text-lg">主页</h2>
+                                        <div class="flex flex-column align-items-start pb-1">
+                                            <Button @click="link_to(jsonData.metadata.urls.homepage)" icon="pi pi-link"
+                                                :label="slice_url(jsonData.metadata.urls.homepage)"
+                                                class="w-full flex flex-row justify-content-start" plain text>
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div v-if="jsonData.metadata.urls.documentation !== undefined">
-                                    <h2 class="pl-2 text-lg">文档</h2>
-                                    <div class="flex flex-column align-items-start pb-1">
-                                        <Button @click="link_to(jsonData.metadata.urls.documentation)" icon="pi pi-box"
-                                            :label="slice_url(jsonData.metadata.urls.documentation)" class="w-full"
-                                            plain text>
-                                        </Button>
+                                    <div v-if="jsonData.metadata.urls.documentation !== undefined">
+                                        <h2 class="pl-2 text-lg">文档</h2>
+                                        <div class="flex flex-column align-items-start pb-1">
+                                            <Button @click="link_to(jsonData.metadata.urls.documentation)"
+                                                icon="pi pi-box"
+                                                :label="slice_url(jsonData.metadata.urls.documentation)" class="w-full"
+                                                plain text>
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div v-if="jsonData.metadata.urls.repository !== undefined">
-                                    <h2 class="pl-2 text-lg">仓库</h2>
-                                    <div class="flex flex-column align-items-start pb-1">
-                                        <Button @click="link_to(jsonData.metadata.urls.repository)" icon="pi pi-github"
-                                            :label="slice_url(jsonData.metadata.urls.repository, false)" class="w-full"
-                                            plain text>
-                                        </Button>
+                                    <div v-if="jsonData.metadata.urls.repository !== undefined">
+                                        <h2 class="pl-2 text-lg">仓库</h2>
+                                        <div class="flex flex-column align-items-start pb-1">
+                                            <Button @click="link_to(jsonData.metadata.urls.repository)"
+                                                icon="pi pi-github"
+                                                :label="slice_url(jsonData.metadata.urls.repository, false)"
+                                                class="w-full" plain text>
+                                            </Button>
+                                        </div>
                                     </div>
-                                </div>
-                                <div>
-                                    <h2 class="pl-2 text-lg">作者</h2>
-                                    <div class="flex flex-column align-items-start pb-1">
-                                        <div v-for="author in jsonData.metadata.authors">
-                                            <Button icon="pi pi-user" :label="author.name" plain text></Button>
+                                    <div>
+                                        <h2 class="pl-2 text-lg">作者</h2>
+                                        <div class="flex flex-column align-items-start pb-1">
+                                            <div v-for="author in jsonData.metadata.authors">
+                                                <Button icon="pi pi-user" :label="author.name" plain text></Button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -252,17 +262,17 @@ function tablize(data: { [key: string]: string }): {
                             <div v-for="(event, name) in jsonData.handlers">
                                 <h2><code>{{ name }}</code>指令</h2>
                                 <span v-if="event.description !== null" class="text-gray-400 pl-2">{{
-                                    event.description
-                                }}</span>
+                            event.description
+                        }}</span>
                                 <pre v-if="event.usage !== null"><code>{{ event.usage }}</code></pre>
-                                <div class="p-1" v-html="md.render(event.content)"></div>
+                                <div v-if="event.content" class="p-1" v-html="md.render(event.content)"></div>
                                 <div v-for="(cmd, name) in event.sub_cmd">
                                     <h3><code>{{ name }}</code>选项</h3>
                                     <span v-if="cmd.description !== null" class="text-gray-400 pl-2">{{
-                                    cmd.description
-                                }}</span>
+                            cmd.description
+                        }}</span>
                                     <pre v-if="event.usage !== null"><code>{{ cmd.usage }}</code></pre>
-                                    <div class="p-1" v-html="md.render(cmd.content)"></div>
+                                    <div v-if="cmd.content" class="p-1" v-html="md.render(cmd.content)"></div>
                                 </div>
                             </div>
                         </Panel>
@@ -309,7 +319,22 @@ function tablize(data: { [key: string]: string }): {
                             </div>
                         </Panel>
                     </TabPanel>
-                    <TabPanel v-if="distributions !== undefined" header="依赖"></TabPanel>
+                    <TabPanel v-if="distributions !== undefined" :header="distributions.length + ' 个版本'">
+                        <div class="flex flex-column gap-3">
+                            <Card v-for="distribution in distributions" @click="router.push(distribution.readme_url)"
+                                class="no-content">
+                                <template #title>
+                                    <div class="header gap-3 align-items-center justify-content-between">
+                                        <h1 class="text-5xl m-0 mt-1">
+                                            {{ jsonData.metadata.name }}
+                                            <span class="text-base text-gray-400">v{{ distribution.version
+                                                }}</span>
+                                        </h1>
+                                    </div>
+                                </template>
+                            </Card>
+                        </div>
+                    </TabPanel>
                 </TabView>
             </div>
         </div>
