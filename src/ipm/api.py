@@ -578,7 +578,7 @@ def doc(
     project = InfiniProject(toml_path.parent)
     loader = Loader()
     loader.close()
-    sys.path.append(str(Path.cwd()))
+    sys.path.append(str(target_path))
     module = importlib.import_module("src")
     loader.load_from_module(module)
     dist_path = Path(dist).resolve()
