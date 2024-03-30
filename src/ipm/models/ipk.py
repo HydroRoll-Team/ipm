@@ -200,12 +200,9 @@ class InfiniFrozenPackage(InfiniPackage):
         self._name = name
         self._version = version
 
-    def __hash__(self) -> str:
-        return ifp_hash(self._source_path)
-
     @property
     def hash(self) -> str:
-        return self.hash
+        return ifp_hash(self._source_path)
 
     @property
     def name(self) -> str:
