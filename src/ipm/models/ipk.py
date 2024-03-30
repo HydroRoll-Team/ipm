@@ -126,13 +126,20 @@ class InfiniProject(InfiniPackage):
 
     @property
     def readme(self) -> str:
-        project = self._data.get("project")
+        path = self._source_path.joinpath(self.readme_file)
+        return path.read_text(encoding="utf-8")
+
+    @property
+    def readme_file(self) -> str:
+        project: dict = self._data.unwrap().get("project", {})
         if not project:
             raise ProjectError("项目文件中不存在`project`项!")
+        if "readme" not in project.keys():
+            raise ProjectError("项目文件中不存在`project.readme`项!")
         path = self._source_path.joinpath(project["readme"])
         if not path.exists():
             raise ProjectError("配置文件中的自述文件不存在!")
-        return path.read_text(encoding="utf-8")
+        return project["readme"]
 
     @property
     def name(self) -> str:

@@ -1,0 +1,13 @@
+[project]
+name = "example"
+version = "0.1.0"
+description = "示例规则包"
+authors = [
+    {name = "fu050409",email = "fu050409@163.com"},
+]
+license = "AGPLv3"
+readme = "README.md"
+
+[requirements]
+
+[dependencies]

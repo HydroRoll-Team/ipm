@@ -36,8 +36,14 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
     success("开发环境构建完毕.", echo)
 
     update("复制工程文件...", echo)
-    shutil.copytree(src_path, arc_dir / "src")
+    shutil.copytree(src_path, arc_dir.joinpath("src"))
     shutil.copy2(ipk._source_path / "infini.toml", arc_dir / "infini.toml")
+    shutil.copy2(
+        ipk._source_path.joinpath("pyproject.toml"), arc_dir.joinpath("pyproject.toml")
+    )
+    shutil.copy2(
+        ipk._source_path.joinpath(ipk.readme_file), arc_dir.joinpath(ipk.readme_file)
+    )
     success("工程文件复制完毕.", echo)
 
     update("打包 [bold green]ipk[/bold green]文件...", echo)

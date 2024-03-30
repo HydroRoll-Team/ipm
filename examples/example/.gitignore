@@ -3,9 +3,13 @@
 __pycache__/
 *.pyc
 
-# Builds
+# IPM Builds
 .ipm-build/
 dist/
+
+# Cached Databases
+*.db
+*.sqlite3
 
 # Distribution / packaging
 eggs/
@@ -51,7 +55,7 @@ MANIFEST
 __pypackages__/
 
 # Environments
-.env
+.env*
 .venv
 env/
 venv/
