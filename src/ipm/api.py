@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 
 from ipm import project
-from ipm.const import INDEX
+from ipm.const import INDEX, VUE_CODE
 from ipm.models.lock import PackageLock, ProjectLock
 from ipm.project.env import new_virtualenv
 from ipm.project.toml_file import (
@@ -554,15 +554,26 @@ def install(target_path: StrPath, echo: bool = False) -> bool:
     return True
 
 
-def doc(target_path: StrPath, type: str, dist: StrPath, echo: bool = False) -> bool:
+def doc(
+    target_path: StrPath,
+    type: str,
+    dist: StrPath,
+    submodule: bool = False,
+    echo: bool = False,
+) -> bool:
     info("构建项目文档...", echo)
     if type.lower() != "vue":
-        raise EnvironmentError("目前仅支持 Vue!")
+        raise EnvironmentError("目前仅支持 Vue 部署！")
 
     update("准备环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    if not submodule and not shutil.which("npm"):
+        raise EnvironmentError(
+            "IPM 未能在环境中找到 [bold green]Node.js[/] 安装, 请确保 NPM 在环境中被正确安装. "
+            "你可以前往`[green]https://nodejs.org/en/download[/]`来安装此包管理器."
         )
     project = InfiniProject(toml_path.parent)
     loader = Loader()
@@ -574,9 +585,13 @@ def doc(target_path: StrPath, type: str, dist: StrPath, echo: bool = False) -> b
     dist_path.mkdir(parents=True, exist_ok=True)
     success("环境准备完毕.", echo)
 
-    docs = json.loads(loader.doc.dumps())
-    docs["metadata"] = project.metadata
-    docs["readme"] = project.readme
-    docs["doc_create_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    dist_path.joinpath("index.json").write_text(json.dumps(docs), encoding="utf-8")
+    if submodule:
+        docs = json.loads(loader.doc.dumps())
+        docs["metadata"] = project.metadata
+        docs["readme"] = project.readme
+        docs["doc_create_at"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        dist_path.joinpath("index.json").write_text(json.dumps(docs), encoding="utf-8")
+        dist_path.joinpath("index.vue").write_text(VUE_CODE, encoding="utf-8")
+    else:
+        raise ProjectError("未被支持。")
     return True

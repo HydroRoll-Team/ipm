@@ -199,10 +199,11 @@ def remove(name: str = typer.Argument(help="Infini 包名")):
 def doc(
     type: str = typer.Argument("vue", help="前端框架名称"),
     dist: str = typer.Argument("doc", help="产出路径"),
+    submodule: bool = typer.Argument(False, help="部署为子模块"),
 ):
     """生成项目文档"""
     try:
-        if api.doc(Path.cwd(), type, dist, echo=True):
+        if api.doc(Path.cwd(), type, dist, submodule=submodule, echo=True):
             tada()
     except IPMException as err:
         error(str(err), echo=True)
