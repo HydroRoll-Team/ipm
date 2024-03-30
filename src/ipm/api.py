@@ -437,6 +437,10 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
         )
     project = InfiniProject(toml_path.parent)
     lock = ProjectLock(target_path)
+    if not lock._lock_path.exists():
+        raise FileNotFoundError(
+            "文件[red]infini.lock[/]不存在！请先执行[bold red]`.ipm lock`[/]生成锁文件！"
+        )
     global_lock = PackageLock()
     if not shutil.which("pdm"):
         raise EnvironmentError(
@@ -477,16 +481,28 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
             dependencies.append(name)
         else:
             dependencies.append(f"{name}{version}")
-    if (
-        result := subprocess.run(
-            ["pdm", "add", *dependencies],
-            cwd=target_path,
-            capture_output=True,
-            text=True,
+    if dependencies:
+        update(
+            "安装依赖: "
+            + ", ".join(
+                ["[bold green]" + dependency + "[/]" for dependency in dependencies]
+            )
+            + "...",
+            echo,
         )
-    ).returncode != 0:
-        error(result.stderr.strip("\n"), echo)
-        raise RuntimeError("PDM 异常退出, 指令忽略.")
+        if (
+            result := subprocess.run(
+                ["pdm", "add", *dependencies],
+                cwd=target_path,
+                capture_output=True,
+                text=True,
+            )
+        ).returncode != 0:
+            error(result.stderr.strip("\n"), echo)
+            raise RuntimeError("PDM 异常退出, 指令忽略.")
+        success("依赖安装完成！", echo)
+    else:
+        success("未检测到任何依赖，忽略任务。", echo)
 
     success("依赖环境同步完毕！", echo)
     return True
