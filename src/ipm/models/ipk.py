@@ -163,7 +163,7 @@ class InfiniProject(InfiniPackage):
 
     @property
     def urls(self) -> Dict[str, str]:
-        return self._data.unwrap()["project"]["urls"]
+        return self._data.unwrap()["project"].get("urls", {})
 
     @property
     def license(self) -> str:
@@ -171,7 +171,7 @@ class InfiniProject(InfiniPackage):
 
     @property
     def dependencies(self) -> Dict[str, str]:
-        return self._data.get("dependencies", {})
+        return self._data.unwrap().get("dependencies", {})
 
     @property
     def requirements(self) -> Requirements:
@@ -191,7 +191,7 @@ class InfiniProject(InfiniPackage):
 
     @property
     def topics(self) -> List[str]:
-        return self._data.unwrap()["project"]["topics"]
+        return self._data.unwrap()["project"].get("topics", [])
 
 
 class InfiniFrozenPackage(InfiniPackage):
