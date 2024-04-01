@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING
 
 import tomlkit
 
+
 if TYPE_CHECKING:
     from ipm.models import ipk
     from ipm.models.index import Yggdrasil
@@ -135,6 +136,8 @@ class ProjectLock(IPMLock):
     def init_from_project(
         project: "ipk.InfiniProject", dist_path: Optional[Path] = None
     ) -> "ProjectLock":
+        from ipm.utils.resolve import get_requirements_by_project
+
         lock = ProjectLock(dist_path or project._source_path)
         lock._data = tomlkit.document()
 
@@ -146,7 +149,9 @@ class ProjectLock(IPMLock):
         lock._data.add("metadata", metadata)
 
         packages = tomlkit.aot()
-        for requirement in project.requirements:
+        requirements = get_requirements_by_project(project)
+
+        for requirement in requirements:
             if requirement.is_local():
                 packages.append(
                     tomlkit.item(

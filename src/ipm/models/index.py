@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, List, Literal, Optional, Union, TYPE_CHECKING
 from ipm.const import INDEX_PATH
 from ipm.exceptions import LockLoadFailed
 from ipm.typing import Dict
@@ -8,6 +8,9 @@ import requests
 import tempfile
 import shutil
 import json
+
+if TYPE_CHECKING:
+    from ipm.models.requirement import Requirement
 
 
 class Yggdrasil:
@@ -100,9 +103,31 @@ class Yggdrasil:
                 return distribution["hash"]
 
     def get_lastest_version(self, name: str) -> Optional[str]:
+        """从本地获取规则包最新版本"""
         if name not in self.packages:
             return None
         return self.packages[name]["latestVersion"]
+
+    def get_requirements(self, name: str) -> List["Requirement"]:
+        if not name in self.packages:
+            return []
+        from ipm.models.requirement import Requirement
+
+        res = []
+        requirements = self.packages[name]["requirements"]
+        for requirement in requirements:
+            res.append(
+                Requirement(
+                    requirement["name"],
+                    requirement["version"],
+                    url=requirement.get(
+                        "url",
+                        f"/packages/{requirement['name']}-{requirement['version']}.ipk",
+                    ),
+                    yggdrasil=self,
+                )
+            )
+        return res
 
     @property
     def uuid(self) -> str:

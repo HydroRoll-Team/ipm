@@ -98,7 +98,7 @@ class InfiniProject(InfiniPackage):
         requirement.add("yggdrasil", yggdrasil) if yggdrasil else None
         requirement.add("index", index) if index else None
         if not requirement:
-            raise ValueError("")
+            raise ValueError
         self._data["requirements"].update({name: requirement})  # type: ignore
 
     def unrequire(self, name: str) -> None:

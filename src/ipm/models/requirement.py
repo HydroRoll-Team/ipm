@@ -35,6 +35,13 @@ class Requirement:
         self.yggdrasil = yggdrasil
         self.hash = hash
 
+    def __eq__(self, __value: "Requirement") -> bool:
+        return (
+            __value.name == self.name
+            and __value.version == self.version
+            and __value.yggdrasil.index == self.yggdrasil.index
+        )
+
     def is_local(self) -> bool:
         return bool(self.path)
 
