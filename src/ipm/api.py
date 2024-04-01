@@ -2,7 +2,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Optional
 
-from ipm import project
 from ipm.const import INDEX, VUE_CODE
 from ipm.models.lock import PackageLock, ProjectLock
 from ipm.project.env import new_virtualenv
@@ -339,7 +338,8 @@ def require(
     project.dump()
     success("项目文件写入完成.", echo)
 
-    # sync()
+    install(target_path, echo=echo)
+
     success("规则包依赖新增完成.", echo)
     return True
 
