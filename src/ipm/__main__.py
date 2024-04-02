@@ -237,8 +237,14 @@ def install():
 
 @main.command()
 def update():
-    """更新 Infini 依赖"""
-    raise NotImplementedError
+    """更新规则包依赖"""
+    try:
+        if api.update(Path.cwd(), echo=True):
+            tada()
+    except IPMException as err:
+        error(str(err), echo=True)
+    finally:
+        status.stop()
 
 
 main.add_typer(yggdrasil)

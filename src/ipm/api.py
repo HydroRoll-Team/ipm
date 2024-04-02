@@ -1,5 +1,6 @@
 from datetime import datetime
 from pathlib import Path
+from distlib.version import SemanticVersion
 from typing import Optional
 
 from ipm.const import INDEX, VUE_CODE
@@ -23,7 +24,7 @@ from ipm.exceptions import (
     NameError,
     RuntimeError,
 )
-from ipm.models.ipk import InfiniProject, InfiniFrozenPackage
+from ipm.models.ipk import InfiniProject
 from ipm.models.index import Yggdrasil
 
 from infini.loader import Loader
@@ -609,4 +610,35 @@ def doc(
     return True
 
 
-def update(target_path: StrPath, echo: bool = False): ...
+def update(target_path: StrPath, echo: bool = False) -> bool:
+    info("更新依赖环境...", echo)
+    statusup("检查环境中...", echo)
+    if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
+        raise FileNotFoundError(
+            f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
+        )
+    project = InfiniProject(toml_path.parent)
+    if not shutil.which("pdm"):
+        raise EnvironmentError(
+            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+        )
+    success("环境检查完毕.", echo)
+
+    statusup("更新依赖中...", echo)
+    for requirement in project.requirements:
+        lastest_version = requirement.yggdrasil.get_lastest_version(requirement.name)
+        if not lastest_version:
+            raise ProjectError(f"包 [bold red]{requirement.name}[/] 被从世界树燃烧了。")
+        if SemanticVersion(lastest_version) > SemanticVersion(requirement.version):
+            project.require(requirement.name, version=lastest_version)
+            success(
+                f"将 [bold green]{requirement.version}[/] 升级到 [bold yellow]{lastest_version}[/].",
+                echo,
+            )
+
+    check(target_path, echo)
+    sync(target_path, echo)
+
+    install(target_path, echo)
+    return True
