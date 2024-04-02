@@ -13,7 +13,6 @@ import tomlkit
 if TYPE_CHECKING:
     from ipm.models import ipk
     from ipm.models.index import Yggdrasil
-    from ipm.models.ipk import InfiniFrozenPackage
 
 
 class IPMLock(metaclass=ABCMeta):
@@ -153,26 +152,9 @@ class ProjectLock(IPMLock):
 
         for requirement in requirements:
             if requirement.is_local():
-                packages.append(
-                    tomlkit.item(
-                        {
-                            "name": requirement.name,
-                            "version": requirement.version,
-                            "path": requirement.path,
-                        }
-                    )
-                )
+                packages.append(tomlkit.item(requirement.as_dict()))
             else:
-                packages.append(
-                    tomlkit.item(
-                        {
-                            "name": requirement.name,
-                            "version": requirement.version,
-                            "yggdrasil": requirement.yggdrasil.index,
-                            "url": requirement.url,
-                        }
-                    )
-                )
+                packages.append(tomlkit.item(requirement.as_dict()))
         lock._data.add("package", packages)
 
         return lock

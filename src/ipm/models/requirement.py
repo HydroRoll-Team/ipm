@@ -32,6 +32,10 @@ class Requirement:
         self.version = version
         self.path = path
         self.url = url or yggdrasil.get_url(name, version)
+        if not self.url:
+            raise ProjectError(
+                f"规则包 [bold red]{name}[/] 不存在版本 [bold yellow]{version}[/]"
+            )
         self.yggdrasil = yggdrasil
         self.hash = hash
 
@@ -44,6 +48,21 @@ class Requirement:
 
     def is_local(self) -> bool:
         return bool(self.path)
+
+    def as_dict(self) -> dict:
+        if self.is_local():
+            return {
+                "name": self.name,
+                "version": self.version,
+                "path": self.path,
+            }
+        else:
+            return {
+                "name": self.name,
+                "version": self.version,
+                "yggdrasil": self.yggdrasil.index,
+                "url": self.url,
+            }
 
 
 class Requirements(List[Requirement]):

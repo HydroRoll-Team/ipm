@@ -176,7 +176,7 @@ class InfiniProject(InfiniPackage):
     @property
     def requirements(self) -> Requirements:
         return Requirements(
-            self._data.get("requirements") or {},
+            self._data.unwrap().get("requirements", {}),
             yggdrasils={
                 name: global_lock.get_yggdrasil_by_index(url)
                 for name, url in self.yggdrasils.items()
