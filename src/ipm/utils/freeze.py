@@ -3,19 +3,17 @@ from typing import Optional
 from ipm.exceptions import FileNotFoundError, VerifyFailed
 from ipm.models.ipk import InfiniProject, InfiniFrozenPackage
 from ipm.typing import StrPath
-from ipm.logging import update, info, success, error
-from ipm.utils.hash import ifp_hash, ifp_verify
+from ipm.utils.hash import ifp_verify
 from ipm.utils import _freeze
 
 import tempfile
 import shutil
 
 
-def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
-    update("构建开发环境...", echo)
-
+def build_ipk(ipk: InfiniProject) -> InfiniFrozenPackage:
     arcname = f"{ipk.name}-{ipk.version}"
     build_dir = ipk._source_path.joinpath(".ipm-build")
+    build_dir.joinpath(".gitignore").write_text("*\n")
     arc_dir = build_dir.joinpath(arcname)
     src_path = ipk._source_path / "src"
     dist_path = ipk._source_path / "dist"
@@ -26,16 +24,12 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
             f"文件或文件夹 [blue]{ipk._source_path.resolve()}[/blue]]不存在!"
         )
     if build_dir.exists() or dist_path.exists():
-        update("清理构建环境...")
         shutil.rmtree(build_dir, ignore_errors=True)
         shutil.rmtree(dist_path, ignore_errors=True)
-        success("构建环境清理完毕.")
 
     dist_path.mkdir(parents=True, exist_ok=True)
     arc_dir.mkdir(parents=True, exist_ok=True)
-    success("开发环境构建完毕.", echo)
 
-    update("复制工程文件...", echo)
     shutil.copytree(src_path, arc_dir.joinpath("src"))
     shutil.copy2(ipk._source_path / "infini.toml", arc_dir / "infini.toml")
     shutil.copy2(
@@ -44,24 +38,12 @@ def build_ipk(ipk: InfiniProject, echo: bool = False) -> InfiniFrozenPackage:
     shutil.copy2(
         ipk._source_path.joinpath(ipk.readme_file), arc_dir.joinpath(ipk.readme_file)
     )
-    success("工程文件复制完毕.", echo)
 
-    update("打包 [bold green]ipk[/bold green]文件...", echo)
     _freeze.create_tar_gz(
         str(build_dir),
         str(ifp_path),
     )
     shutil.copy2(ifp_path, dist_path.joinpath(ipk.default_name + ".tar.gz"))
-    success(f"打包文件已存至 [blue]{ifp_path}[/blue].", echo)
-
-    update("创建 SHA256 验证文件...", echo)
-    hash_bytes = ifp_hash(ifp_path)
-    info(f"文件 SHA256 值为 [purple]{hash_bytes}[/purple].", echo)
-
-    success(
-        f"包 [bold green]{ipk.name}[/bold green] [yellow]{ipk.version}[/yellow] 构建成功.",
-        echo,
-    )
 
     return InfiniFrozenPackage(ifp_path, ipk.name, version=ipk.version)
 

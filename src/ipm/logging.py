@@ -7,7 +7,7 @@ console = Console()
 status = console.status("")
 
 
-def update(message: str, echo: bool = False) -> None:
+def statusup(message: str, echo: bool = False) -> None:
     return status.update(message) if echo else status.stop()
 
 

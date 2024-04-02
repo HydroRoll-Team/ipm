@@ -14,7 +14,7 @@ from ipm.project.toml_file import (
 from ipm.typing import StrPath
 from ipm.utils import freeze, loader
 from ipm.utils.git import get_user_name_email, git_init, git_tag
-from ipm.logging import confirm, status, update, info, success, warning, error, ask
+from ipm.logging import confirm, status, statusup, info, success, warning, error, ask
 from ipm.exceptions import (
     EnvironmentError,
     ProjectError,
@@ -40,7 +40,7 @@ import json
 def lock(target_path: StrPath, echo: bool = False) -> bool:
     info("生成项目锁...", echo)
 
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -48,7 +48,7 @@ def lock(target_path: StrPath, echo: bool = False) -> bool:
     project = InfiniProject(toml_path.parent)
     success("环境检查完毕.", echo)
 
-    update("写入依赖锁文件...", echo)
+    statusup("写入依赖锁文件...", echo)
     lock = ProjectLock.init_from_project(project)
     lock.dump()
     success("项目依赖锁写入完成.", echo)
@@ -57,7 +57,7 @@ def lock(target_path: StrPath, echo: bool = False) -> bool:
 
 def check(target_path: StrPath, echo: bool = False) -> bool:
     info("检查项目环境...", echo)
-    update("检查基础环境中...", echo)
+    statusup("检查基础环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -65,10 +65,10 @@ def check(target_path: StrPath, echo: bool = False) -> bool:
     project = InfiniProject(toml_path.parent)
     success("环境检查完毕.", echo)
 
-    update("同步世界树中...", echo)
+    statusup("同步世界树中...", echo)
     global_lock = PackageLock()
     for index in project.yggdrasils.values():
-        update(f"同步世界树: [green]{index}[/]...", echo)
+        statusup(f"同步世界树: [green]{index}[/]...", echo)
         if not (yggdrasil := global_lock.get_yggdrasil_by_index(index)):
             Yggdrasil.init(index)
         else:
@@ -85,7 +85,7 @@ def tag(target_path: StrPath, tag: str, echo: bool = False):
     info(f"更新规则包版本号为: [bold green]{tag}[/]", echo)
     tag = tag.lstrip("v")
 
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -111,7 +111,7 @@ def tag(target_path: StrPath, tag: str, echo: bool = False):
     success("项目文件写入完成.", echo)
 
     if toml_path.parent.joinpath(".git").is_dir():
-        update("处理 Git 标签中...", echo)
+        statusup("处理 Git 标签中...", echo)
         git_tag(toml_path.parent, tag)
         success(f"标签 [bold green]{tag}[/] 已写入.", echo)
 
@@ -120,7 +120,7 @@ def tag(target_path: StrPath, tag: str, echo: bool = False):
 
 def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
     info("初始化规则包...", echo)
-    update("检查环境...", echo)
+    statusup("检查环境...", echo)
     target_path = Path(target_path).resolve()
     if (toml_path := (target_path / "infini.toml")).exists() and not force:
         warning(
@@ -158,7 +158,7 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
     sync_now = confirm("立刻同步环境?", default=True) if echo else False
 
     status.start()
-    update("构建环境中...", echo)
+    statusup("构建环境中...", echo)
 
     init_infini(
         toml_path=toml_path,
@@ -207,7 +207,7 @@ def init(target_path: StrPath, force: bool = False, echo: bool = False) -> bool:
 def new(dist_path: StrPath, echo: bool = False) -> bool:
     info("新建规则包...", echo)
 
-    update("检查环境...", echo)
+    statusup("检查环境...", echo)
     path = Path(dist_path).resolve()
     if path.exists():
         warning(
@@ -224,9 +224,9 @@ def new(dist_path: StrPath, echo: bool = False) -> bool:
     return True
 
 
-def build(target_path: StrPath, echo: bool = False) -> Optional[InfiniFrozenPackage]:
+def build(target_path: StrPath, echo: bool = False) -> bool:
     info("构建规则包...", echo)
-    update("检查构建环境...", echo)
+    statusup("检查构建环境...", echo)
 
     if not (Path(target_path).resolve() / "infini.toml").exists():
         raise FileNotFoundError(
@@ -236,9 +236,17 @@ def build(target_path: StrPath, echo: bool = False) -> Optional[InfiniFrozenPack
     try:
         ipk = InfiniProject(target_path)
     except TomlLoadFailed as e:
-        return error(f"环境存在异常: {e}", echo)
+        error(f"环境存在异常: {e}", echo)
+        return False
 
-    return freeze.build_ipk(ipk, echo)
+    update("开始构建规则包...", echo)
+    ifp = freeze.build_ipk(ipk)
+    success(f"文件 SHA256 值为 [purple]{ifp.hash}[/purple].", echo)
+    success(
+        f"包 [bold green]{ifp.name}[/bold green] [yellow]{ifp.version}[/yellow] 构建成功.",
+        echo,
+    )
+    return True
 
 
 def extract(
@@ -259,13 +267,13 @@ def yggdrasil_add(
     target_path: StrPath, name: str, index: str, echo: bool = False
 ) -> bool:
     info(f"新增世界树: [bold green]{name}[/]", echo)
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
         )
     success("环境检查完毕.", echo)
-    update("同步世界树中...", echo)
+    statusup("同步世界树中...", echo)
     Yggdrasil.init(index)
     add_yggdrasil(toml_path, name, index)
     success("更改均已写入文件.", echo)
@@ -274,7 +282,7 @@ def yggdrasil_add(
 
 def yggdrasil_remove(target_path: StrPath, name: str, echo: bool = False) -> bool:
     info(f"新增世界树: [bold green]{name}[/]", echo)
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -296,7 +304,7 @@ def require(
     echo: bool = False,
 ) -> bool:
     info(f"新增规则包依赖: [bold green]{name}[/bold green]", echo)
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -305,7 +313,7 @@ def require(
     global_lock = PackageLock()
     success("环境检查完毕.", echo)
 
-    update("检查世界树中...", echo)
+    statusup("检查世界树中...", echo)
     ygd = (
         Yggdrasil.init(index or INDEX)
         if not global_lock.has_index(index or INDEX)
@@ -327,7 +335,7 @@ def require(
 
     check(target_path, echo=echo)
 
-    update("处理 Infini 项目依赖锁...", echo)
+    statusup("处理 Infini 项目依赖锁...", echo)
     project.require(
         name,
         version=version,
@@ -346,7 +354,7 @@ def require(
 
 def unrequire(target_path: StrPath, name: str, echo: bool = False):
     info(f"删除规则包依赖: [bold green]{name}[/bold green]", echo)
-    update("处理 Infini 项目依赖锁...", echo)
+    statusup("处理 Infini 项目依赖锁...", echo)
     project = InfiniProject()
     project.unrequire(name)
     project.dump()
@@ -358,7 +366,7 @@ def unrequire(target_path: StrPath, name: str, echo: bool = False):
 
 def add(target_path, name: str, echo: bool = False) -> bool:
     info(f"新增环境依赖项: [bold green]{name}[/bold green]", echo)
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (
         match := re.match(r"^((?:[a-zA-Z_-]|\d)+)(?:([>=<]+\d+(?:[.]\d+)*))?$", name)
     ):
@@ -375,7 +383,7 @@ def add(target_path, name: str, echo: bool = False) -> bool:
         )
     success("环境检查完毕.", echo)
 
-    update("安装依赖中...", echo)
+    statusup("安装依赖中...", echo)
 
     name = match.group(1)
     version = match.group(2)
@@ -398,7 +406,7 @@ def add(target_path, name: str, echo: bool = False) -> bool:
 
 def remove(target_path: StrPath, name: str, echo: bool = False):
     info(f"删除环境依赖项: [bold green]{name}[/bold green]", echo)
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -430,7 +438,7 @@ def remove(target_path: StrPath, name: str, echo: bool = False):
 
 def sync(target_path: StrPath, echo: bool = False) -> bool:
     info(f"同步依赖环境...", echo)
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -449,13 +457,13 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
         )
     success("环境检查完毕.", echo)
 
-    update("同步依赖环境中...", echo)
+    statusup("同步依赖环境中...", echo)
     for requirement in lock.requirements:
         if not requirement.is_local():
             if global_lock.has_frozen_package(requirement.name, requirement.version):
                 continue
-            update(
-                f"下载 [bold green]{requirement.name}=={requirement.version}[/]...",
+            statusup(
+                f"下载 [bold green]{requirement.name}[/] [bold yellow]{requirement.version}[/]...",
                 echo,
             )
             ifp = loader.load_from_remote(
@@ -474,7 +482,7 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
                 f"[bold green]{requirement.name} {requirement.version}[/] 安装完成！",
                 echo,
             )
-    update("同步依赖环境中...", echo)
+    statusup("同步依赖环境中...", echo)
     dependencies = []
     for name, version in project.dependencies.items():
         if version == "*":
@@ -482,7 +490,7 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
         else:
             dependencies.append(f"{name}{version}")
     if dependencies:
-        update(
+        statusup(
             "安装依赖: "
             + ", ".join(
                 ["[bold green]" + dependency + "[/]" for dependency in dependencies]
@@ -510,7 +518,7 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
 
 def install(target_path: StrPath, echo: bool = False) -> bool:
     info("安装规则包环境中...", echo)
-    update("检查环境中...", echo)
+    statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -527,7 +535,7 @@ def install(target_path: StrPath, echo: bool = False) -> bool:
     check(target_path, echo)
     sync(target_path, echo)
 
-    update("安装依赖中...", echo)
+    statusup("安装依赖中...", echo)
     lock = ProjectLock(target_path)
     packages_path = toml_path.parent.joinpath("packages")
     packages_path.mkdir(parents=True, exist_ok=True)
@@ -565,7 +573,7 @@ def doc(
     if type.lower() != "vue":
         raise EnvironmentError("目前仅支持 Vue 部署！")
 
-    update("准备环境中...", echo)
+    statusup("准备环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -599,3 +607,6 @@ def doc(
     else:
         raise ProjectError("未被支持。")
     return True
+
+
+def update(target_path: StrPath, echo: bool = False): ...
