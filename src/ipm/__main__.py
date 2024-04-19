@@ -5,7 +5,6 @@ from ipm.logging import status, error, tada
 
 import typer
 
-status.start()
 main = typer.Typer(
     name="ipm", help="Infini 包管理器", no_args_is_help=True, add_completion=False
 )
