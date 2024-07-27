@@ -69,12 +69,12 @@ def check(target_path: StrPath, echo: bool = False) -> bool:
     statusup("同步世界树中...", echo)
     global_lock = PackageLock()
     for index in project.yggdrasils.values():
-        statusup(f"同步世界树: [green]{index}[/]...", echo)
+        statusup(f"同步世界树: [green]{index}[/green]...", echo)
         if not (yggdrasil := global_lock.get_yggdrasil_by_index(index)):
             Yggdrasil.init(index)
         else:
             yggdrasil.sync()
-        success(f"世界树 [green]{index}[/] 同步完毕.", echo)
+        success(f"世界树 [green]{index}[/green] 同步完毕.", echo)
 
     if not lock(target_path, echo=echo):
         return False
@@ -83,7 +83,7 @@ def check(target_path: StrPath, echo: bool = False) -> bool:
 
 
 def tag(target_path: StrPath, tag: str, echo: bool = False):
-    info(f"更新规则包版本号为: [bold green]{tag}[/]", echo)
+    info(f"更新规则包版本号为: [bold green]{tag}[/bold green]", echo)
     tag = tag.lstrip("v")
 
     statusup("检查环境中...", echo)
@@ -114,7 +114,7 @@ def tag(target_path: StrPath, tag: str, echo: bool = False):
     if toml_path.parent.joinpath(".git").is_dir():
         statusup("处理 Git 标签中...", echo)
         git_tag(toml_path.parent, tag)
-        success(f"标签 [bold green]{tag}[/] 已写入.", echo)
+        success(f"标签 [bold green]{tag}[/bold green] 已写入.", echo)
 
     return True
 
@@ -267,7 +267,7 @@ def extract(
 def yggdrasil_add(
     target_path: StrPath, name: str, index: str, echo: bool = False
 ) -> bool:
-    info(f"新增世界树: [bold green]{name}[/]", echo)
+    info(f"新增世界树: [bold green]{name}[/bold green]", echo)
     statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
@@ -282,7 +282,7 @@ def yggdrasil_add(
 
 
 def yggdrasil_remove(target_path: StrPath, name: str, echo: bool = False) -> bool:
-    info(f"新增世界树: [bold green]{name}[/]", echo)
+    info(f"新增世界树: [bold green]{name}[/bold green]", echo)
     statusup("检查环境中...", echo)
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
@@ -332,7 +332,7 @@ def require(
         version = ygd.get_lastest_version(name)
 
     if not version:
-        raise ProjectError(f"无法找到一个匹配 [red]{name}[/] 的版本。")
+        raise ProjectError(f"无法找到一个匹配 [red]{name}[/red] 的版本。")
 
     check(target_path, echo=echo)
 
@@ -371,7 +371,7 @@ def add(target_path, name: str, echo: bool = False) -> bool:
     if not (
         match := re.match(r"^((?:[a-zA-Z_-]|\d)+)(?:([>=<]+\d+(?:[.]\d+)*))?$", name)
     ):
-        raise NameError(f"版本号 [bold red]{name}[/] 不合法.")
+        raise NameError(f"版本号 [bold red]{name}[/bold red] 不合法.")
     if not (toml_path := Path(target_path).joinpath("infini.toml")).exists():
         raise FileNotFoundError(
             f"文件 [green]infini.toml[/green] 尚未被初始化, 你可以使用[bold green]`ipm init`[/bold green]来初始化项目."
@@ -379,8 +379,8 @@ def add(target_path, name: str, echo: bool = False) -> bool:
     project = InfiniProject(toml_path.parent)
     if not shutil.which("pdm"):
         raise EnvironmentError(
-            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
-            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+            "IPM 未能在环境中找到 [bold green]PDM[/bold green] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/bold green]`来安装此包管理器."
         )
     success("环境检查完毕.", echo)
 
@@ -415,8 +415,8 @@ def remove(target_path: StrPath, name: str, echo: bool = False):
     project = InfiniProject(toml_path.parent)
     if not shutil.which("pdm"):
         raise EnvironmentError(
-            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
-            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+            "IPM 未能在环境中找到 [bold green]PDM[/bold green] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/bold green]`来安装此包管理器."
         )
     success("环境检查完毕.", echo)
     project.remove(name)
@@ -448,13 +448,13 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
     lock = ProjectLock(target_path)
     if not lock._lock_path.exists():
         raise FileNotFoundError(
-            "文件[red]infini.lock[/]不存在！请先执行[bold red]`.ipm lock`[/]生成锁文件！"
+            "文件[red]infini.lock[/red]不存在！请先执行[bold red]`.ipm lock`[/bold red]生成锁文件！"
         )
     global_lock = PackageLock()
     if not shutil.which("pdm"):
         raise EnvironmentError(
-            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
-            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+            "IPM 未能在环境中找到 [bold green]PDM[/bold green] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/bold green]`来安装此包管理器."
         )
     success("环境检查完毕.", echo)
 
@@ -464,7 +464,7 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
             if global_lock.has_frozen_package(requirement.name, requirement.version):
                 continue
             statusup(
-                f"下载 [bold green]{requirement.name}[/] [bold yellow]{requirement.version}[/]...",
+                f"下载 [bold green]{requirement.name}[/bold green] [bold yellow]{requirement.version}[/bold yellow]...",
                 echo,
             )
             ifp = loader.load_from_remote(
@@ -480,7 +480,7 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
                 str(ifp._source_path),
             )
             success(
-                f"[bold green]{requirement.name} {requirement.version}[/] 安装完成！",
+                f"[bold green]{requirement.name} {requirement.version}[/bold green] 安装完成！",
                 echo,
             )
     statusup("同步依赖环境中...", echo)
@@ -494,7 +494,7 @@ def sync(target_path: StrPath, echo: bool = False) -> bool:
         statusup(
             "安装依赖: "
             + ", ".join(
-                ["[bold green]" + dependency + "[/]" for dependency in dependencies]
+                ["[bold green]" + dependency + "[/bold green]" for dependency in dependencies]
             )
             + "...",
             echo,
@@ -528,8 +528,8 @@ def install(target_path: StrPath, echo: bool = False) -> bool:
     global_lock = PackageLock()
     if not shutil.which("pdm"):
         raise EnvironmentError(
-            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
-            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+            "IPM 未能在环境中找到 [bold green]PDM[/bold green] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/bold green]`来安装此包管理器."
         )
     success("环境检查完毕.", echo)
 
@@ -553,7 +553,7 @@ def install(target_path: StrPath, echo: bool = False) -> bool:
         )
         if not path:
             raise ProjectError(
-                f"无法找到依赖 [red]{requirement.name} {requirement.version}[/]."
+                f"无法找到依赖 [red]{requirement.name} {requirement.version}[/red]."
             )
         prj = freeze.extract_ipk(path, packages_path, hash=requirement.hash)
         shutil.move(
@@ -581,8 +581,8 @@ def doc(
         )
     if not submodule and not shutil.which("npm"):
         raise EnvironmentError(
-            "IPM 未能在环境中找到 [bold green]Node.js[/] 安装, 请确保 NPM 在环境中被正确安装. "
-            "你可以前往`[green]https://nodejs.org/en/download[/]`来安装此包管理器."
+            "IPM 未能在环境中找到 [bold green]Node.js[/bold green] 安装, 请确保 NPM 在环境中被正确安装. "
+            "你可以前往`[green]https://nodejs.org/en/download[/green]`来安装此包管理器."
         )
     project = InfiniProject(toml_path.parent)
     loader = Loader()
@@ -620,8 +620,8 @@ def update(target_path: StrPath, echo: bool = False) -> bool:
     project = InfiniProject(toml_path.parent)
     if not shutil.which("pdm"):
         raise EnvironmentError(
-            "IPM 未能在环境中找到 [bold green]PDM[/] 安装, 请确保 PDM 在环境中被正确安装. "
-            "你可以使用`[bold green]pipx install pdm[/]`来安装此包管理器."
+            "IPM 未能在环境中找到 [bold green]PDM[/bold green] 安装, 请确保 PDM 在环境中被正确安装. "
+            "你可以使用`[bold green]pipx install pdm[/bold green]`来安装此包管理器."
         )
     success("环境检查完毕.", echo)
 
@@ -629,11 +629,11 @@ def update(target_path: StrPath, echo: bool = False) -> bool:
     for requirement in project.requirements:
         lastest_version = requirement.yggdrasil.get_lastest_version(requirement.name)
         if not lastest_version:
-            raise ProjectError(f"包 [bold red]{requirement.name}[/] 被从世界树燃烧了。")
+            raise ProjectError(f"包 [bold red]{requirement.name}[/bold red] 被从世界树燃烧了。")
         if SemanticVersion(lastest_version) > SemanticVersion(requirement.version):
             project.require(requirement.name, version=lastest_version)
             success(
-                f"将 [bold green]{requirement.version}[/] 升级到 [bold yellow]{lastest_version}[/].",
+                f"将 [bold green]{requirement.version}[/bold green] 升级到 [bold yellow]{lastest_version}[/bold yellow].",
                 echo,
             )
 
