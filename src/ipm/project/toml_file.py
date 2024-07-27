@@ -116,11 +116,11 @@ def add_yggdrasil(toml_path: Path, name: str, index: str):
 
 def remove_yggdrasil(project: InfiniProject, name: str):
     if "yggdrasils" not in project._data:
-        raise ProjectError("项目文件缺乏 [bold red]yggdrasils[/] 项.")
+        raise ProjectError("项目文件缺乏 [bold red]yggdrasils[/bold red] 项.")
     else:
         yggdrasils = project._data["yggdrasils"]
         if name not in yggdrasils.keys():  # type: ignore
-            raise ProjectError(f"世界树 [bold red]{name}[/] 未注册, 忽略操作.")
+            raise ProjectError(f"世界树 [bold red]{name}[/bold red] 未注册, 忽略操作.")
     project.dump()
 
 
